@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "better-mock": "^0.3.7"
+  }
+}

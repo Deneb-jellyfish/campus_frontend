@@ -13,6 +13,18 @@ app.$mount()
 
 // #ifdef VUE3
 import { createSSRApp } from 'vue'
+// 开发环境下引入 Mock
+if (process.env.NODE_ENV === 'development') {
+  // H5 环境
+  // #ifdef H5
+  import('./mock/index.js')
+  // #endif
+  
+  // 小程序和 APP 环境
+  // #ifdef MP || APP-PLUS
+  require('./mock/index.js')
+  // #endif
+}
 export function createApp() {
   const app = createSSRApp(App)
   return {
