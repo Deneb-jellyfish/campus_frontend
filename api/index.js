@@ -1,130 +1,124 @@
-// api/index.js - API 接口统一管理
+// api/index.js
 
-import { get, post, put, del, upload } from '@/utils/request'
+import { delay, topicsData, categoriesData, postsData } from '@/mock/index.js';
 
-/**
- * ========== 用户相关 ==========
- */
-export const userApi = {
-  // 登录
-  login: (data) => post('/user/login', data),
-  
-  // 获取用户信息
-  getUserInfo: () => get('/user/info'),
-  
-  // 更新用户信息
-  updateUserInfo: (data) => put('/user/info', data),
-  
-  // 获取用户详情
-  getUserDetail: (userId) => get(`/user/${userId}`)
-}
+// 是否使用 mock 数据（上线时改为 false）
+const USE_MOCK = true;
+
+// 真实 API 基础地址
+const BASE_URL = 'https://your-api.com/api';
 
 /**
- * ========== 帖子相关 ==========
+ * 封装请求方法
  */
-export const postApi = {
-  // 获取帖子列表（瀑布流）
-  getPostList: (params) => get('/post/list', params),
-  
-  // 获取帖子详情
-  getPostDetail: (postId) => get(`/post/${postId}`),
-  
-  // 发布帖子
-  publishPost: (data) => post('/post/publish', data),
-  
-  // 删除帖子
-  deletePost: (postId) => del(`/post/${postId}`),
-  
-  // 点赞/取消点赞
-  toggleLike: (postId) => post(`/post/${postId}/like`),
-  
-  // 收藏/取消收藏
-  toggleCollect: (postId) => post(`/post/${postId}/collect`)
-}
+const request = (options) => {
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url: BASE_URL + options.url,
+      method: options.method || 'GET',
+      data: options.data,
+      header: {
+        'Content-Type': 'application/json',
+        // 'Authorization': `Bearer ${getToken()}`
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          resolve(res.data);
+        } else {
+          reject(res);
+        }
+      },
+      fail: reject
+    });
+  });
+};
 
 /**
- * ========== 评论相关 ==========
+ * 获取热门话题
  */
-export const commentApi = {
-  // 获取评论列表
-  getCommentList: (postId, params) => get(`/comment/${postId}`, params),
-  
-  // 发表评论
-  addComment: (data) => post('/comment/add', data),
-  
-  // 删除评论
-  deleteComment: (commentId) => del(`/comment/${commentId}`),
-  
-  // 评论点赞
-  likeComment: (commentId) => post(`/comment/${commentId}/like`)
-}
+export const getHotTopics = async () => {
+  if (USE_MOCK) {
+    await delay(200);
+    return { code: 200, data: topicsData, message: 'success' };
+  }
+  return request({ url: '/topics/hot' });
+};
 
 /**
- * ========== 聊天相关 ==========
+ * 获取分类列表
  */
-export const chatApi = {
-  // 获取会话列表
-  getConversationList: () => get('/chat/conversation/list'),
-  
-  // 获取聊天记录
-  getChatHistory: (conversationId, params) => get(`/chat/history/${conversationId}`, params),
-  
-  // 发送消息（HTTP）
-  sendMessage: (data) => post('/chat/send', data),
-  
-  // 删除会话
-  deleteConversation: (conversationId) => del(`/chat/conversation/${conversationId}`),
-  
-  // 标记已读
-  markAsRead: (conversationId) => post(`/chat/read/${conversationId}`)
-}
+export const getCategories = async () => {
+  if (USE_MOCK) {
+    await delay(100);
+    return { code: 200, data: categoriesData, message: 'success' };
+  }
+  return request({ url: '/categories' });
+};
 
 /**
- * ========== 话题相关 ==========
+ * 获取帖子列表
+ * @param {Object} params - { categoryId, page, pageSize }
  */
-export const topicApi = {
-  // 获取热门话题
-  getHotTopics: () => get('/topic/hot'),
-  
-  // 搜索话题
-  searchTopic: (keyword) => get('/topic/search', { keyword }),
-  
-  // 话题详情
-  getTopicDetail: (topicId) => get(`/topic/${topicId}`)
-}
+export const getPosts = async (params = {}) => {
+  if (USE_MOCK) {
+    await delay(300);
+    
+    let result = [...postsData];
+    
+    // 按分类筛选
+    if (params.categoryId && params.categoryId !== 0) {
+      result = result.filter(post => post.categoryId === params.categoryId);
+    }
+    
+    // 模拟分页
+    const page = params.page || 1;
+    const pageSize = params.pageSize || 10;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    
+    return { 
+      code: 200, 
+      data: {
+        list: result.slice(start, end),
+        total: result.length,
+        page,
+        pageSize,
+        hasMore: end < result.length
+      },
+      message: 'success' 
+    };
+  }
+  return request({ url: '/posts', data: params });
+};
 
 /**
- * ========== 上传相关 ==========
+ * 点赞/取消点赞
+ * @param {Number} postId 
+ * @param {Boolean} isLike 
  */
-export const uploadApi = {
-  // 上传图片
-  uploadImage: (filePath) => upload(filePath, { type: 'image' }),
-  
-  // 上传视频
-  uploadVideo: (filePath) => upload(filePath, { type: 'video' })
-}
+export const toggleLike = async (postId, isLike) => {
+  if (USE_MOCK) {
+    await delay(150);
+    return { code: 200, data: { isLiked: isLike }, message: 'success' };
+  }
+  return request({ 
+    url: `/posts/${postId}/like`, 
+    method: 'POST',
+    data: { isLike }
+  });
+};
 
 /**
- * ========== 搜索相关 ==========
+ * 搜索帖子
+ * @param {String} keyword 
  */
-export const searchApi = {
-  // 综合搜索
-  search: (keyword, params) => get('/search', { keyword, ...params }),
-  
-  // 搜索用户
-  searchUser: (keyword) => get('/search/user', { keyword }),
-  
-  // 搜索帖子
-  searchPost: (keyword) => get('/search/post', { keyword })
-}
-
-// 默认导出所有 API
-export default {
-  userApi,
-  postApi,
-  commentApi,
-  chatApi,
-  topicApi,
-  uploadApi,
-  searchApi
-}
+export const searchPosts = async (keyword) => {
+  if (USE_MOCK) {
+    await delay(300);
+    const result = postsData.filter(post => 
+      post.content.includes(keyword) || post.userName.includes(keyword)
+    );
+    return { code: 200, data: result, message: 'success' };
+  }
+  return request({ url: '/posts/search', data: { keyword } });
+};
