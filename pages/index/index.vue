@@ -69,6 +69,9 @@ import PostCard from '@/components/PostCard.vue';
 import HotTopics from '@/components/HotTopics.vue';
 import CategoryNav from '@/components/CategoryNav.vue';
 
+// 引入 API（mock数据）
+import { getHotTopics, getCategories, getPosts, toggleLike } from '../../api/index.js';
+
 export default {
   components: {
     TabBar,
@@ -82,98 +85,15 @@ export default {
       currentCategory: 0,
       isNavFixed: false,
       
-      // 话题数据
-      topics: [
-        { 
-          id: 1, 
-          title: '在家也能做你喜欢的事情', 
-          hot: true, 
-          views: '123万',
-          participants: ['👤', '👤', '👤', '👤']
-        },
-        { 
-          id: 2, 
-          title: '旅行的意义是什么', 
-          hot: true, 
-          views: '97万',
-          participants: ['👤', '👤', '👤', '👤']
-        },
-        { 
-          id: 3, 
-          title: '今天的单子有点多啊', 
-          hot: false, 
-          views: '65万',
-          participants: ['👤', '👤', '👤', '👤']
-        }
-      ],
-      
-      // 分类导航
-      categories: [
-        { id: 0, name: '全部' },
-        { id: 1, name: '闲置' },
-        { id: 2, name: '求助' },
-        { id: 3, name: '日常生活' },
-        { id: 4, name: '投票' },
-        { id: 5, name: '吐槽' }
-      ],
-      
-      // 帖子数据
-      posts: [
-        {
-          id: 1,
-          userAvatar: '👨',
-          userName: '黄灯泡绿灯炮',
-          userLevel: 'LV.3',
-          time: '2024晚',
-          tag: '闲置',
-          content: '出一台笔记本自用的可以流畅打朝瓦打cf,换台式了所以不用了,爽快来,980买不了...',
-          images: ['#8B7355', '#6B5344', '#5C4033'],
-          product: { price: 980 },
-          views: '14206',
-          comments: '124',
-          likes: '234'
-        },
-        {
-          id: 2,
-          userAvatar: '👨',
-          userName: '黄灯泡绿灯炮',
-          userLevel: 'LV.3',
-          time: '2024晚',
-          tag: '投票',
-          content: '下雨天你最喜欢干什么?',
-          images: [],
-          views: '14206',
-          comments: '124',
-          likes: '234'
-        },
-        {
-          id: 3,
-          userAvatar: '👩',
-          userName: '小红的日常',
-          userLevel: 'LV.5',
-          time: '1小时前',
-          tag: '日常生活',
-          content: '今天天气真好，分享一下校园里的美景～阳光洒在草坪上，感觉整个人都充满了活力！',
-          images: ['#90EE90', '#98FB98', '#87CEEB'],
-          views: '8520',
-          comments: '56',
-          likes: '892'
-        },
-        {
-          id: 4,
-          userAvatar: '👦',
-          userName: '学习小达人',
-          userLevel: 'LV.4',
-          time: '3小时前',
-          tag: '求助',
-          content: '有没有人知道图书馆几点开门啊？明天要去占座准备期末考试',
-          images: [],
-          views: '3240',
-          comments: '45',
-          likes: '120'
-        }
-      ]
+      // 数据（初始为空，从mock获取）
+      topics: [],
+      categories: [],
+      posts: []
     };
+  },
+  
+  onLoad() {
+    this.initData();
   },
   
   onPageScroll(e) {
@@ -182,6 +102,53 @@ export default {
   },
   
   methods: {
+    // 初始化数据
+    async initData() {
+      await Promise.all([
+        this.fetchTopics(),
+        this.fetchCategories(),
+        this.fetchPosts()
+      ]);
+    },
+    
+    // 获取热门话题
+    async fetchTopics() {
+      try {
+        const res = await getHotTopics();
+        if (res.code === 200) {
+          this.topics = res.data;
+        }
+      } catch (error) {
+        console.error('获取话题失败:', error);
+      }
+    },
+    
+    // 获取分类
+    async fetchCategories() {
+      try {
+        const res = await getCategories();
+        if (res.code === 200) {
+          this.categories = res.data;
+        }
+      } catch (error) {
+        console.error('获取分类失败:', error);
+      }
+    },
+    
+    // 获取帖子列表
+    async fetchPosts() {
+      try {
+        const res = await getPosts({
+          categoryId: this.currentCategory
+        });
+        if (res.code === 200) {
+          this.posts = res.data.list;
+        }
+      } catch (error) {
+        console.error('获取帖子失败:', error);
+      }
+    },
+    
     // 搜索
     goToSearch() {
       console.log('跳转到搜索页面');
@@ -203,7 +170,7 @@ export default {
     switchCategory(id) {
       this.currentCategory = id;
       console.log('切换分类:', id);
-      // 可以在这里加载对应分类的帖子
+      this.fetchPosts(); // 重新获取帖子
     },
     
     // Tab切换
@@ -214,7 +181,6 @@ export default {
       } else {
         this.currentTab = tabId;
         console.log('切换Tab:', tabId);
-        // 可以在这里处理页面跳转
       }
     },
     
@@ -226,7 +192,6 @@ export default {
     
     handlePostMore(post) {
       console.log('帖子更多操作:', post.id);
-      // 可以显示操作菜单：举报、收藏、分享等
     },
     
     handlePostClick(post) {
@@ -246,12 +211,15 @@ export default {
     
     handleCommentClick(post) {
       console.log('打开评论:', post.id);
-      // 可以打开评论弹窗或跳转评论页
     },
     
-    handleLikeClick({ post, isLiked }) {
+    async handleLikeClick({ post, isLiked }) {
       console.log('点赞状态:', post.id, isLiked ? '已点赞' : '取消点赞');
-      // 调用API更新点赞状态
+      try {
+        await toggleLike(post.id, isLiked);
+      } catch (error) {
+        console.error('点赞失败:', error);
+      }
     }
   }
 };
