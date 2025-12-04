@@ -56,19 +56,42 @@
         v-for="item in notifyList" 
         :key="item.id" 
         class="notify-card"
+        :class="{ unread: !item.isRead }"
+        @click="goToPostDetail(item)"
       >
+        <!-- 未读小红点 -->
+        <view v-if="!item.isRead" class="notify-unread-dot"></view>
+        
         <image class="avatar" :src="item.avatar" mode="aspectFill"></image>
         <view class="notify-info">
           <view class="info-header">
             <text class="username">{{ item.username }}</text>
             <text class="notify-type">{{ item.typeText }} {{ item.time }}</text>
           </view>
+          
+          <!-- 评论内容（如果是评论类型） -->
+          <text v-if="(item.type === 'comment' || item.type === 'reply') && item.commentContent" class="comment-text">
+            {{ item.commentContent }}
+          </text>
+          
+          <!-- 引用的帖子/评论内容 -->
           <view v-if="item.quote" class="quote-content">
-            {{ item.quote }}
+            <text class="quote-label">{{ item.quoteLabel || '原文' }}：</text>
+            <text>{{ item.quote }}</text>
           </view>
-          <text v-if="item.content" class="content">{{ item.content }}</text>
-          <view class="reply-btn" @click="handleReply(item)">回复</view>
+          
+          <!-- 只有评论类型才显示回复按钮 -->
+          <view 
+            v-if="item.type === 'comment' || item.type === 'reply'" 
+            class="reply-btn" 
+            @click.stop="handleReply(item)"
+          >
+            回复
+          </view>
         </view>
+        
+        <!-- 右侧指示箭头 -->
+        <text class="arrow-icon">›</text>
       </view>
       
       <view v-if="notifyList.length === 0" class="empty-tip">
@@ -89,7 +112,7 @@
 
 <script>
 import TabBar from '@/components/TabBar.vue';
-import { getChatList, getNotifyList } from '../../api/message.js';
+import { getChatList, getNotifyList, markChatAsRead, markNotifyAsRead } from '../../api/message.js';
 
 export default {
   components: {
@@ -107,6 +130,12 @@ export default {
   
   onLoad() {
     this.initData();
+  },
+  
+  onShow() {
+    // 每次显示页面时刷新数据
+    this.fetchChatList();
+    this.fetchNotifyList();
   },
   
   methods: {
@@ -141,16 +170,93 @@ export default {
       }
     },
     
+    // 更新未读数
+    updateUnreadCounts() {
+      this.unreadChat = this.chatList.reduce((sum, item) => sum + (item.unread || 0), 0);
+      this.unreadNotify = this.notifyList.filter(item => !item.isRead).length;
+    },
+    
     switchTab(tab) {
       this.currentTab = tab;
     },
     
-    goToChat(item) {
+    // 进入聊天并标记已读
+    async goToChat(item) {
+      // 立即更新本地状态
+      if (item.unread > 0) {
+        item.unread = 0;
+        this.updateUnreadCounts();
+        
+        // 调用API标记已读
+        try {
+          await markChatAsRead(item.id);
+        } catch (error) {
+          console.error('标记已读失败:', error);
+        }
+      }
+      
       console.log('进入聊天:', item.username);
+      // 跳转到聊天页面
+      uni.navigateTo({ url: `/pages/chat/detail?userId=${item.userId}` });
     },
     
-    handleReply(item) {
-      console.log('回复:', item);
+    // 跳转到帖子详情并标记已读
+    async goToPostDetail(item) {
+      // 立即更新本地状态
+      if (!item.isRead) {
+        item.isRead = true;
+        this.updateUnreadCounts();
+        
+        // 调用API标记已读
+        try {
+          await markNotifyAsRead(item.id);
+        } catch (error) {
+          console.error('标记已读失败:', error);
+        }
+      }
+      
+      if (item.postId) {
+        uni.navigateTo({ 
+          url: `/pages/post/detail?id=${item.postId}` 
+        });
+      }
+    },
+    
+    // 回复评论并标记已读
+    async handleReply(item) {
+      // 立即更新本地状态
+      if (!item.isRead) {
+        item.isRead = true;
+        this.updateUnreadCounts();
+        
+        // 调用API标记已读
+        try {
+          await markNotifyAsRead(item.id);
+        } catch (error) {
+          console.error('标记已读失败:', error);
+        }
+      }
+      
+      // 跳转到帖子详情页，并传递需要回复的评论信息
+      if (item.postId) {
+        const params = {
+          id: item.postId
+        };
+        
+        // 如果是回复评论，传递评论ID
+        if (item.commentId) {
+          params.replyCommentId = item.commentId;
+          params.replyUsername = item.username;
+        }
+        
+        const queryString = Object.keys(params)
+          .map(key => `${key}=${encodeURIComponent(params[key])}`)
+          .join('&');
+        
+        uni.navigateTo({ 
+          url: `/pages/post/detail?${queryString}` 
+        });
+      }
     },
     
     handleTabChange(tabId) {
@@ -311,10 +417,29 @@ export default {
 .notify-card {
   display: flex;
   padding: 30rpx;
+  padding-left: 40rpx;
   background-color: #fff;
   border-radius: 20rpx;
   margin-bottom: 20rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+/* 未读状态的卡片 */
+.notify-card.unread {
+  background-color: #fafffe;
+}
+
+/* 赞评未读小红点 */
+.notify-unread-dot {
+  position: absolute;
+  top: 50%;
+  left: 15rpx;
+  transform: translateY(-50%);
+  width: 16rpx;
+  height: 16rpx;
+  background-color: #ff4d4f;
+  border-radius: 50%;
 }
 
 .notify-info {
@@ -334,20 +459,33 @@ export default {
   color: #999;
 }
 
-.notify-info .content {
-  font-size: 26rpx;
-  color: #666;
+/* 评论内容 */
+.comment-text {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.5;
+  margin-bottom: 15rpx;
+  display: block;
 }
 
 /* 引用内容 */
 .quote-content {
-  margin-top: 15rpx;
+  margin-top: 10rpx;
   padding: 20rpx;
   background-color: #f5f5f5;
   border-radius: 10rpx;
   font-size: 26rpx;
   color: #666;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.quote-label {
+  color: #999;
+  font-size: 24rpx;
 }
 
 /* 回复按钮 */
@@ -359,6 +497,14 @@ export default {
   color: #4CAF50;
   font-size: 24rpx;
   border-radius: 30rpx;
+}
+
+/* 右侧箭头 */
+.arrow-icon {
+  color: #ccc;
+  font-size: 32rpx;
+  margin-left: 10rpx;
+  align-self: center;
 }
 
 /* 空状态 */

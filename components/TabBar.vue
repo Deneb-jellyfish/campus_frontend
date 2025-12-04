@@ -79,7 +79,7 @@ export default {
   right: 0;
   padding: 20rpx 30rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  z-index: 9999; /* 提高层级 */
+  z-index: 50; /* 提高层级 *降一下,要让举报浮在前面*/
   pointer-events: none;
 }
 

@@ -48,7 +48,7 @@ export default {
 <style scoped>
 /* 分类导航占位元素 */
 .category-nav-placeholder {
-  height: 88rpx;
+  height: 288rpx;
 }
 
 /* 分类导航 - 吸顶 + 磨砂效果 */
@@ -57,11 +57,12 @@ export default {
   border-bottom: 1rpx solid #f0f0f0;
   transition: all 0.3s ease;
   z-index: 99;
+ 
 }
 
 .category-nav-wrapper.is-fixed {
   position: fixed;
-  top: 0;
+  top: 120rpx;
   left: 0;
   right: 0;
   background: rgba(255, 255, 255, 0.5);

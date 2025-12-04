@@ -1,15 +1,8 @@
 {
-  "hash": "d4b9c932",
-  "configHash": "4cefcdf4",
-  "lockfileHash": "d762275e",
-  "browserHash": "a3a0c684",
-  "optimized": {
-    "better-mock": {
-      "src": "../../../../../node_modules/better-mock/dist/mock.browser.esm.js",
-      "file": "better-mock.js",
-      "fileHash": "7f0b49b7",
-      "needsInterop": false
-    }
-  },
+  "hash": "e2c5aeba",
+  "configHash": "813c69c1",
+  "lockfileHash": "133bdec3",
+  "browserHash": "6738db48",
+  "optimized": {},
   "chunks": {}
 }

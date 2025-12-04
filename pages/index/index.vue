@@ -1,8 +1,7 @@
-<!-- index.vue -->
 <template>
   <view class="home-page">
-    <!-- 顶部导航 -->
-    <view class="header">
+    <!-- 顶部导航 - 吸顶 -->
+    <view class="header" :class="{ 'is-fixed': isNavFixed }">
       <view class="school-info">
         <view class="avatar">🎓</view>
         <view class="school-name">
@@ -15,6 +14,9 @@
         <text class="icon">⊙</text>
       </view>
     </view>
+
+    <!-- 占位元素 - 当header吸顶时显示 -->
+    <view class="header-placeholder" v-if="isNavFixed"></view>
 
     <!-- 搜索栏 -->
     <view class="search-bar" @click="goToSearch">
@@ -29,7 +31,7 @@
       @more-click="handleTopicsMore"
     />
 
-    <!-- 内容分类导航 -->
+    <!-- 分类导航 -->
     <CategoryNav 
       :categories="categories"
       :current-category="currentCategory"
@@ -87,7 +89,7 @@ export default {
       topics: [
         { 
           id: 1, 
-          title: '在家也能做你喜欢的事情', 
+          title: '感谢好心人请我吃疯4', 
           hot: true, 
           views: '123万',
           participants: ['👤', '👤', '👤', '👤']
@@ -123,7 +125,7 @@ export default {
         {
           id: 1,
           userAvatar: '👨',
-          userName: '黄灯泡绿灯炮',
+          userName: '黄灯泡绿灯',
           userLevel: 'LV.3',
           time: '2024晚',
           tag: '闲置',
@@ -176,88 +178,91 @@ export default {
       ]
     };
   },
+
   onShow() {
-      // 隐藏系统原生的 TabBar，这样你的自定义组件才能显示出来
-      uni.hideTabBar({
-        animation: false // 不使用动画，防止闪烁
-      });
-    },
+    uni.hideTabBar({
+      animation: false
+    });
+  },
+  
   onPageScroll(e) {
-    // 监听页面滚动，判断分类导航是否需要吸顶
+    // 监听页面滚动，判断是否需要吸顶
     this.isNavFixed = e.scrollTop > 400;
   },
   
   methods: {
-    // 搜索
     goToSearch() {
-      console.log('跳转到搜索页面');
-      // uni.navigateTo({ url: '/pages/search/index' });
+      uni.navigateTo({ url: '/pages/search/index' });
     },
     
-    // 话题相关
     handleTopicClick(topic) {
-      console.log('跳转到话题详情:', topic.id);
-      // uni.navigateTo({ url: `/pages/topic/detail?id=${topic.id}` });
+      uni.navigateTo({ 
+        url: `/pages/topic/detail?id=${topic.id}&title=${encodeURIComponent(topic.title)}` 
+      });
     },
     
     handleTopicsMore() {
-      console.log('查看更多话题');
-      // uni.navigateTo({ url: '/pages/topic/list' });
+      uni.navigateTo({ url: '/pages/topic/list' });
     },
     
-    // 分类切换
     switchCategory(id) {
       this.currentCategory = id;
       console.log('切换分类:', id);
-      // 可以在这里加载对应分类的帖子
     },
     
-    // Tab切换
     switchTab(tabId) {
       if (tabId === 'publish') {
-        console.log('打开发布页面');
-        // uni.navigateTo({ url: '/pages/publish/index' });
+        uni.navigateTo({ url: '/pages/publish/index' });
       } else {
         this.currentTab = tabId;
-        console.log('切换Tab:', tabId);
-        // 可以在这里处理页面跳转
       }
     },
     
-    // 帖子相关事件
     handleUserClick(post) {
-      console.log('点击用户:', post.userName);
-      // uni.navigateTo({ url: `/pages/user/profile?id=${post.userId}` });
+      uni.navigateTo({ url: `/pages/user/profile?id=${post.userId || post.id}` });
     },
     
     handlePostMore(post) {
-      console.log('帖子更多操作:', post.id);
-      // 可以显示操作菜单：举报、收藏、分享等
+      uni.showActionSheet({
+        itemList: ['收藏', '分享', '举报'],
+        success: (res) => {
+          const actions = ['收藏', '分享', '举报'];
+          uni.showToast({ title: actions[res.tapIndex], icon: 'none' });
+        }
+      });
     },
     
     handlePostClick(post) {
-      console.log('进入帖子详情:', post.id);
-      // uni.navigateTo({ url: `/pages/post/detail?id=${post.id}` });
+      uni.navigateTo({ 
+        url: `/pages/post/detail?id=${post.id}` 
+      });
     },
     
     handleImageClick({ post, imageIndex }) {
-      console.log('查看图片:', post.id, '第', imageIndex + 1, '张');
-      // uni.previewImage({ urls: post.images, current: imageIndex });
+      if (post.images && post.images.length > 0 && !post.images[0].startsWith('#')) {
+        uni.previewImage({ 
+          urls: post.images, 
+          current: imageIndex 
+        });
+      } else {
+        this.handlePostClick(post);
+      }
     },
     
     handleProductClick(post) {
-      console.log('查看商品:', post.product);
-      // uni.navigateTo({ url: `/pages/product/detail?id=${post.id}` });
+      uni.navigateTo({ 
+        url: `/pages/post/detail?id=${post.id}` 
+      });
     },
     
     handleCommentClick(post) {
-      console.log('打开评论:', post.id);
-      // 可以打开评论弹窗或跳转评论页
+      uni.navigateTo({ 
+        url: `/pages/post/detail?id=${post.id}&focus=comment` 
+      });
     },
     
     handleLikeClick({ post, isLiked }) {
       console.log('点赞状态:', post.id, isLiked ? '已点赞' : '取消点赞');
-      // 调用API更新点赞状态
     }
   }
 };
@@ -277,6 +282,25 @@ export default {
   align-items: center;
   padding: 20rpx 30rpx;
   background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+/* 顶部导航吸顶样式 */
+.header.is-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(232, 245, 233, 0.95); /* 半透明效果 */
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+/* header 占位元素 */
+.header-placeholder {
+  height: 120rpx; /* 和 header 的高度一致 */
 }
 
 .school-info {

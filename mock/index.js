@@ -7,7 +7,7 @@ export const delay = (ms = 300) => new Promise(resolve => setTimeout(resolve, ms
 export const topicsData = [
   { 
     id: 1, 
-    title: '在家也能做你喜欢的事情', 
+    title: '感谢好心人请我吃疯4', 
     hot: true, 
     views: '123万',
     participants: ['👤', '👤', '👤', '👤']

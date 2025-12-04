@@ -4,9 +4,17 @@
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "首页",
-        "enablePullDownRefresh": true
+        "enablePullDownRefresh": true,
+		"navigationStyle": "custom"
       }
     },
+	{
+	  "path": "pages/post/detail",
+	  "style": {
+	    "navigationBarTitleText": "帖子详情",
+		"navigationStyle": "custom"
+	  }
+	},
     {
       "path": "pages/errand/index",
       "style": {
@@ -20,6 +28,12 @@
         "navigationBarTitleText": "发布内容"
       }
     },
+	{
+	  "path": "pages/publish/Post",
+	  "style": {
+	    "navigationBarTitleText": "发布帖子"
+	  }
+	},
     {
       "path": "pages/message/index",
       "style": {
@@ -27,20 +41,22 @@
         "enablePullDownRefresh": true
       }
     },
+	{
+	  "path": "pages/chat/detail",
+	  "style": {
+	    "navigationBarTitleText": "聊天详情",
+	    "enablePullDownRefresh": true,
+		"navigationStyle": "custom"
+	  }
+	},
     {
       "path": "pages/profile/index",
       "style": {
         "navigationBarTitleText": "个人中心",
         "navigationStyle": "custom"
       }
-    },
-    {
-      "path": "pages/chat/chat",
-      "style": {
-        "navigationBarTitleText": "聊天详情",
-        "navigationStyle": "default"
-      }
     }
+    
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",

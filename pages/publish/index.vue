@@ -20,18 +20,29 @@
   </view>
 </template>
 
-<script setup>
-const goBack = () => {
-  uni.navigateBack()
-}
-
-const handlePublish = (type) => {
-  uni.showToast({
-    title: `选择了: ${type === 'post' ? '帖子' : '跑腿'}`,
-    icon: 'none'
-  })
-  // 这里跳转到具体的编辑表单页面
-}
+<script>
+export default {
+  methods: {
+    goBack() {
+      uni.navigateBack();
+    },
+    
+    handlePublish(type) {
+      if (type === 'post') {
+        // 跳转到帖子发布页面
+        uni.navigateTo({
+          url: '/pages/publish/Post'
+        });
+      } else if (type === 'errand') {
+        // 跳转到跑腿发布页面（暂未实现）
+        uni.showToast({
+          title: '跑腿功能开发中',
+          icon: 'none'
+        });
+      }
+    }
+  }
+};
 </script>
 
 <style scoped>
@@ -44,23 +55,29 @@ const handlePublish = (type) => {
   justify-content: center;
   position: relative;
 }
+
 .close-btn {
   position: absolute;
   top: 80rpx;
   right: 60rpx;
   font-size: 60rpx;
   color: #333;
+  line-height: 1;
 }
+
 .title {
   font-size: 48rpx;
   font-weight: bold;
   margin-bottom: 80rpx;
+  color: #333;
 }
+
 .options-container {
   display: flex;
   flex-direction: column;
   gap: 40rpx;
 }
+
 .option-card {
   padding: 40rpx;
   border-radius: 24rpx;
@@ -68,13 +85,33 @@ const handlePublish = (type) => {
   flex-direction: column;
   transition: all 0.2s;
 }
+
 .option-card:active {
   transform: scale(0.98);
 }
-.option-card.post { background: #E8F5E9; }
-.option-card.errand { background: #E3F2FD; }
 
-.icon { font-size: 60rpx; margin-bottom: 20rpx; }
-.opt-title { font-size: 36rpx; font-weight: bold; margin-bottom: 10rpx; color: #333; }
-.opt-desc { font-size: 26rpx; color: #666; }
+.option-card.post {
+  background: #E8F5E9;
+}
+
+.option-card.errand {
+  background: #E3F2FD;
+}
+
+.icon {
+  font-size: 60rpx;
+  margin-bottom: 20rpx;
+}
+
+.opt-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+  color: #333;
+}
+
+.opt-desc {
+  font-size: 26rpx;
+  color: #666;
+}
 </style>
