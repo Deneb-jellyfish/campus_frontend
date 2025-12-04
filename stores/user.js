@@ -1,113 +1,57 @@
 // stores/user.js - 用户状态管理 (Pinia)
 
 import { defineStore } from 'pinia'
-import { userApi } from '@/api'
+
 import { setToken, removeToken, getToken } from '@/utils/request'
 
-export const useUserStore = defineStore('user', {
-  state: () => ({
-    token: getToken() || '',
-    userInfo: null,
-    isLogin: false
-  }),
-  
-  getters: {
-    // 获取用户头像
-    avatar: (state) => state.userInfo?.avatar || '',
+import { ref, computed } from 'vue'
+
+export const useUserStore = defineStore('user', () => {
+  // 状态
+  const token = ref(uni.getStorageSync('token') || '')
+  const userInfo = ref(uni.getStorageSync('userInfo') || null)
+
+  // 计算属性
+  const isLoggedIn = computed(() => !!token.value)
+  const avatar = computed(() => userInfo.value?.avatarUrl || '../../static/default-avatar.png')
+  const nickname = computed(() => userInfo.value?.nickname || '未登录用户')
+
+  // 动作：登录成功处理
+  const setLoginState = (loginData) => {
+    token.value = loginData.token
+    userInfo.value = loginData.user
     
-    // 获取用户昵称
-    nickname: (state) => state.userInfo?.nickname || '未登录',
+    // 持久化存储
+    uni.setStorageSync('token', loginData.token)
+    uni.setStorageSync('userInfo', loginData.user)
+  }
+
+  // 动作：更新用户信息 (U03)
+  const updateUserInfo = (newInfo) => {
+    userInfo.value = { ...userInfo.value, ...newInfo }
+    uni.setStorageSync('userInfo', userInfo.value)
+  }
+
+  // 动作：退出登录 (U05)
+  const logout = () => {
+    token.value = ''
+    userInfo.value = null
+    uni.removeStorageSync('token')
+    uni.removeStorageSync('userInfo')
     
-    // 获取用户ID
-    userId: (state) => state.userInfo?.id || null
-  },
-  
-  actions: {
-    /**
-     * 登录
-     */
-    async login(loginData) {
-      try {
-        const res = await userApi.login(loginData)
-        this.token = res.token
-        this.userInfo = res.userInfo
-        this.isLogin = true
-        
-        // 保存 Token
-        setToken(res.token)
-        
-        return res
-      } catch (error) {
-        console.error('登录失败:', error)
-        throw error
-      }
-    },
-    
-    /**
-     * 获取用户信息
-     */
-    async fetchUserInfo() {
-      try {
-        const userInfo = await userApi.getUserInfo()
-        this.userInfo = userInfo
-        this.isLogin = true
-        return userInfo
-      } catch (error) {
-        console.error('获取用户信息失败:', error)
-        throw error
-      }
-    },
-    
-    /**
-     * 更新用户信息
-     */
-    async updateUserInfo(data) {
-      try {
-        const userInfo = await userApi.updateUserInfo(data)
-        this.userInfo = { ...this.userInfo, ...userInfo }
-        return userInfo
-      } catch (error) {
-        console.error('更新用户信息失败:', error)
-        throw error
-      }
-    },
-    
-    /**
-     * 退出登录
-     */
-    logout() {
-      this.token = ''
-      this.userInfo = null
-      this.isLogin = false
-      removeToken()
-      
-      // 跳转到登录页
-      uni.reLaunch({
-        url: '/pages/login/login'
-      })
-    },
-    
-    /**
-     * 检查登录状态
-     */
-    checkLogin() {
-      if (!this.token) {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录',
-          confirmText: '去登录',
-          success: (res) => {
-            if (res.confirm) {
-              uni.navigateTo({
-                url: '/pages/login/login'
-              })
-            }
-          }
-        })
-        return false
-      }
-      return true
-    }
+    // 如果你在做 API 调用，这里应该调用 /auth/logout
+    // userApi.logout() 
+  }
+
+  return {
+    token,
+    userInfo,
+    isLoggedIn,
+    avatar,
+    nickname,
+    setLoginState,
+    updateUserInfo,
+    logout
   }
 })
 
