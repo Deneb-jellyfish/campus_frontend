@@ -1,3 +1,4 @@
+<!-- chat.vue -->
 <template>
   <view class="chat-page">
     <!-- 消息列表 -->

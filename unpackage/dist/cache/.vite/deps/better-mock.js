@@ -1,4 +1,4 @@
-// C:/Users/LENOVO/Documents/HBuilderProjects/campus/node_modules/better-mock/dist/mock.browser.esm.js
+// C:/Users/c2483/Documents/HBuilderProjects/campus_frontend/node_modules/better-mock/dist/mock.browser.esm.js
 var constant = {
   GUID: 1,
   RE_KEY: /(.+)\|(?:\+(\d+)|([\+\-]?\d+-?[\+\-]?\d*)?(?:\.(\d+-?\d*))?)/,
