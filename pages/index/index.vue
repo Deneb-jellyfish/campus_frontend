@@ -22,154 +22,66 @@
     </view>
 
     <!-- 热门话题卡片 -->
-    <view class="hot-topics-card">
-      <view class="card-header">
-        <text class="card-title">🔥 热门话题</text>
-        <text class="more-btn">查看更多 ›</text>
-      </view>
-      <view class="topics-container">
-        <view class="topic-item" v-for="topic in topics" :key="topic.id" @click="goToTopic(topic.id)">
-          <view class="topic-content">
-            <text class="topic-tag">#</text>
-            <text class="topic-title">{{ topic.title }}</text>
-            <text class="topic-icon">{{ topic.hot ? '🔥' : '' }}</text>
-          </view>
-          <view class="topic-meta">
-            <text class="topic-views">累计{{ topic.views }}人气</text>
-            <view class="topic-avatars">
-              <text v-for="(avatar, index) in topic.participants" :key="index" class="avatar-small">
-                {{ avatar }}
-              </text>
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
+    <HotTopics 
+      :topics="topics"
+      @topic-click="handleTopicClick"
+      @more-click="handleTopicsMore"
+    />
 
-    <!-- 内容分类导航 - 占位 -->
-    <view class="category-nav-placeholder" v-if="isNavFixed"></view>
-    
-    <!-- 内容分类导航 - 吸顶 + 磨砂效果 -->
-    <view class="category-nav-wrapper" :class="{ 'is-fixed': isNavFixed }">
-      <scroll-view class="category-nav" scroll-x show-scrollbar="false">
-        <view 
-          v-for="(item, index) in categories" 
-          :key="index"
-          class="category-item"
-          :class="{ active: currentCategory === item.id }"
-          @click="switchCategory(item.id)"
-        >
-          {{ item.name }}
-        </view>
-      </scroll-view>
-    </view>
+    <!-- 内容分类导航 -->
+    <CategoryNav 
+      :categories="categories"
+      :current-category="currentCategory"
+      :is-fixed="isNavFixed"
+      @category-change="switchCategory"
+    />
 
     <!-- 帖子列表 -->
     <view class="post-list">
-      <view class="post-card" v-for="post in posts" :key="post.id">
-        <!-- 帖子头部 -->
-        <view class="post-header">
-          <view class="user-info">
-            <view class="user-avatar">{{ post.userAvatar }}</view>
-            <view class="user-detail">
-              <view class="user-name-row">
-                <text class="user-name">{{ post.userName }}</text>
-                <text class="user-level">{{ post.userLevel }}</text>
-              </view>
-              <text class="post-time">{{ post.time }}</text>
-            </view>
-          </view>
-          <text class="post-more">⋮</text>
-        </view>
-
-        <!-- 帖子内容 -->
-        <view class="post-content">
-          <view class="post-tag" v-if="post.tag">
-            <text>{{ post.tag }}</text>
-          </view>
-          <text class="post-text">{{ post.content }}</text>
-        </view>
-
-        <!-- 帖子图片 -->
-        <view class="post-images" v-if="post.images && post.images.length > 0">
-          <view 
-            class="image-item" 
-            v-for="(img, index) in post.images" 
-            :key="index"
-            :style="{ backgroundColor: img }"
-          >
-          </view>
-        </view>
-
-        <!-- 商品信息 -->
-        <view class="product-info" v-if="post.product">
-          <text class="product-tag">🛒 在售</text>
-          <text class="product-price">价格: ¥{{ post.product.price }}</text>
-        </view>
-
-        <!-- 帖子底部互动 -->
-        <view class="post-footer">
-          <view class="footer-item">
-            <text class="icon">👁</text>
-            <text>{{ post.views }}</text>
-          </view>
-          <view class="footer-item">
-            <text class="icon">💬</text>
-            <text>{{ post.comments }}</text>
-          </view>
-          <view class="footer-item">
-            <text class="icon">👍</text>
-            <text>{{ post.likes }}</text>
-          </view>
-          <view class="footer-item">
-            <text class="icon">💬</text>
-            <text>评论</text>
-          </view>
-        </view>
-      </view>
+      <PostCard 
+        v-for="post in posts" 
+        :key="post.id"
+        :post="post"
+        @user-click="handleUserClick"
+        @more-click="handlePostMore"
+        @post-click="handlePostClick"
+        @image-click="handleImageClick"
+        @product-click="handleProductClick"
+        @comment-click="handleCommentClick"
+        @like-click="handleLikeClick"
+      />
     </view>
 
     <!-- 底部占位，防止被tabbar遮挡 -->
     <view class="bottom-space"></view>
 
-    <!-- 底部导航栏 - 悬浮样式 -->
-    <view class="tabbar-container">
-      <view class="tabbar">
-        <view 
-          class="tabbar-item" 
-          v-for="(item, index) in tabbarList" 
-          :key="index"
-          :class="{ active: currentTab === item.id, 'publish-btn': item.id === 'publish' }"
-          @click="switchTab(item.id)"
-        >
-          <view v-if="item.id === 'publish'" class="publish-circle">
-            <text class="tabbar-icon">{{ item.icon }}</text>
-          </view>
-          <template v-else>
-            <text class="tabbar-icon">{{ item.icon }}</text>
-            <text class="tabbar-label">{{ item.label }}</text>
-          </template>
-        </view>
-      </view>
-    </view>
+    <!-- 底部导航栏 -->
+    <TabBar 
+      :current-tab="currentTab"
+      @tab-change="switchTab"
+    />
   </view>
 </template>
 
 <script>
+import TabBar from '@/components/TabBar.vue';
+import PostCard from '@/components/PostCard.vue';
+import HotTopics from '@/components/HotTopics.vue';
+import CategoryNav from '@/components/CategoryNav.vue';
+
 export default {
+  components: {
+    TabBar,
+    PostCard,
+    HotTopics,
+    CategoryNav
+  },
   data() {
     return {
       currentTab: 'home',
       currentCategory: 0,
       isNavFixed: false,
-      // 底部导航数据
-      tabbarList: [
-        { id: 'home', label: '首页', icon: '🏠' },
-        { id: 'circle', label: '跑腿', icon: '👥' },
-        { id: 'publish', label: '', icon: '➕' },
-        { id: 'message', label: '消息', icon: '💬' },
-        { id: 'profile', label: '我的', icon: '👤' }
-      ],
+      
       // 话题数据
       topics: [
         { 
@@ -194,6 +106,7 @@ export default {
           participants: ['👤', '👤', '👤', '👤']
         }
       ],
+      
       // 分类导航
       categories: [
         { id: 0, name: '全部' },
@@ -203,6 +116,7 @@ export default {
         { id: 4, name: '投票' },
         { id: 5, name: '吐槽' }
       ],
+      
       // 帖子数据
       posts: [
         {
@@ -261,29 +175,83 @@ export default {
       ]
     };
   },
+  
   onPageScroll(e) {
     // 监听页面滚动，判断分类导航是否需要吸顶
-    // 当滚动超过顶部导航+搜索栏+话题卡片的高度时触发
     this.isNavFixed = e.scrollTop > 400;
   },
+  
   methods: {
+    // 搜索
     goToSearch() {
       console.log('跳转到搜索页面');
+      // uni.navigateTo({ url: '/pages/search/index' });
     },
-    goToTopic(id) {
-      console.log('跳转到话题详情:', id);
+    
+    // 话题相关
+    handleTopicClick(topic) {
+      console.log('跳转到话题详情:', topic.id);
+      // uni.navigateTo({ url: `/pages/topic/detail?id=${topic.id}` });
     },
+    
+    handleTopicsMore() {
+      console.log('查看更多话题');
+      // uni.navigateTo({ url: '/pages/topic/list' });
+    },
+    
+    // 分类切换
     switchCategory(id) {
       this.currentCategory = id;
       console.log('切换分类:', id);
+      // 可以在这里加载对应分类的帖子
     },
+    
+    // Tab切换
     switchTab(tabId) {
       if (tabId === 'publish') {
         console.log('打开发布页面');
+        // uni.navigateTo({ url: '/pages/publish/index' });
       } else {
         this.currentTab = tabId;
         console.log('切换Tab:', tabId);
+        // 可以在这里处理页面跳转
       }
+    },
+    
+    // 帖子相关事件
+    handleUserClick(post) {
+      console.log('点击用户:', post.userName);
+      // uni.navigateTo({ url: `/pages/user/profile?id=${post.userId}` });
+    },
+    
+    handlePostMore(post) {
+      console.log('帖子更多操作:', post.id);
+      // 可以显示操作菜单：举报、收藏、分享等
+    },
+    
+    handlePostClick(post) {
+      console.log('进入帖子详情:', post.id);
+      // uni.navigateTo({ url: `/pages/post/detail?id=${post.id}` });
+    },
+    
+    handleImageClick({ post, imageIndex }) {
+      console.log('查看图片:', post.id, '第', imageIndex + 1, '张');
+      // uni.previewImage({ urls: post.images, current: imageIndex });
+    },
+    
+    handleProductClick(post) {
+      console.log('查看商品:', post.product);
+      // uni.navigateTo({ url: `/pages/product/detail?id=${post.id}` });
+    },
+    
+    handleCommentClick(post) {
+      console.log('打开评论:', post.id);
+      // 可以打开评论弹窗或跳转评论页
+    },
+    
+    handleLikeClick({ post, isLiked }) {
+      console.log('点赞状态:', post.id, isLiked ? '已点赞' : '取消点赞');
+      // 调用API更新点赞状态
     }
   }
 };
@@ -370,369 +338,12 @@ export default {
   font-size: 28rpx;
 }
 
-/* 热门话题卡片 */
-.hot-topics-card {
-  margin: 20rpx 30rpx;
-  background-color: #fff;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  box-shadow: 0 4rpx 15rpx rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25rpx;
-  padding-bottom: 20rpx;
-  border-bottom: 2rpx solid #f0f0f0;
-}
-
-.card-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-}
-
-.more-btn {
-  font-size: 26rpx;
-  color: #999;
-}
-
-.topics-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-}
-
-.topic-item {
-  padding: 20rpx;
-  background-color: #fafafa;
-  border-radius: 15rpx;
-  transition: all 0.3s;
-}
-
-.topic-item:active {
-  background-color: #f0f0f0;
-}
-
-.topic-content {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15rpx;
-}
-
-.topic-tag {
-  color: #8bc34a;
-  font-size: 32rpx;
-  font-weight: bold;
-  margin-right: 10rpx;
-}
-
-.topic-title {
-  font-size: 28rpx;
-  color: #333;
-  flex: 1;
-}
-
-.topic-icon {
-  font-size: 30rpx;
-}
-
-.topic-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.topic-views {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.topic-avatars {
-  display: flex;
-  gap: 10rpx;
-}
-
-.avatar-small {
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  background-color: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20rpx;
-}
-
-/* 分类导航占位元素 */
-.category-nav-placeholder {
-  height: 88rpx;
-}
-
-/* 分类导航 - 吸顶 + 磨砂效果 */
-.category-nav-wrapper {
-  background-color: #fff;
-  border-bottom: 1rpx solid #f0f0f0;
-  transition: all 0.3s ease;
-  z-index: 99;
-}
-
-.category-nav-wrapper.is-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(20rpx);
-  -webkit-backdrop-filter: blur(20rpx);
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.08);
-}
-
-.category-nav {
-  padding: 20rpx 30rpx;
-  white-space: nowrap;
-}
-
-.category-item {
-  display: inline-block;
-  padding: 10rpx 25rpx;
-  margin-right: 20rpx;
-  font-size: 28rpx;
-  color: #666;
-  border-radius: 30rpx;
-  transition: all 0.3s;
-}
-
-.category-item.active {
-  background-color: #e8f5e9;
-  color: #4caf50;
-  font-weight: bold;
-}
-
 /* 帖子列表 */
 .post-list {
   padding: 20rpx 30rpx;
 }
 
-.post-card {
-  background-color: #fff;
-  border-radius: 15rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.post-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-}
-
-.user-avatar {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background-color: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-  margin-right: 20rpx;
-}
-
-.user-detail {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-name-row {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-}
-
-.user-name {
-  font-size: 28rpx;
-  color: #333;
-  font-weight: bold;
-}
-
-.user-level {
-  font-size: 20rpx;
-  color: #ff9800;
-  background-color: #fff3e0;
-  padding: 2rpx 8rpx;
-  border-radius: 8rpx;
-}
-
-.post-time {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 5rpx;
-}
-
-.post-more {
-  font-size: 40rpx;
-  color: #999;
-}
-
-.post-content {
-  margin-bottom: 20rpx;
-}
-
-.post-tag {
-  display: inline-block;
-  padding: 4rpx 12rpx;
-  background-color: #e8f5e9;
-  color: #4caf50;
-  border-radius: 8rpx;
-  font-size: 22rpx;
-  margin-right: 10rpx;
-  margin-bottom: 10rpx;
-}
-
-.post-text {
-  font-size: 28rpx;
-  color: #333;
-  line-height: 1.6;
-}
-
-.post-images {
-  display: flex;
-  gap: 10rpx;
-  margin-bottom: 20rpx;
-}
-
-.image-item {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 10rpx;
-  background-color: #f0f0f0;
-}
-
-.product-info {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 15rpx;
-  background-color: #fffef0;
-  border-radius: 10rpx;
-  margin-bottom: 20rpx;
-}
-
-.product-tag {
-  font-size: 24rpx;
-  color: #8bc34a;
-}
-
-.product-price {
-  font-size: 28rpx;
-  color: #f44336;
-  font-weight: bold;
-}
-
-.post-footer {
-  display: flex;
-  justify-content: space-around;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #f0f0f0;
-}
-
-.footer-item {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  font-size: 24rpx;
-  color: #666;
-}
-
-.footer-item .icon {
-  font-size: 28rpx;
-}
-
 .bottom-space {
   height: 20rpx;
-}
-
-/* 底部导航栏容器 - 悬浮样式 */
-.tabbar-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20rpx 30rpx;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  z-index: 100;
-  pointer-events: none;
-}
-
-.tabbar {
-  background: #ffffff;
-  border-radius: 50rpx;
-  height: 120rpx;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  box-shadow: 0 -4rpx 30rpx rgba(0, 0, 0, 0.1);
-  pointer-events: auto;
-}
-
-.tabbar-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.tabbar-item.active .tabbar-icon {
-  color: #4caf50;
-}
-
-.tabbar-item.active .tabbar-label {
-  color: #4caf50;
-}
-
-.tabbar-icon {
-  font-size: 44rpx;
-  color: #666;
-  margin-bottom: 4rpx;
-}
-
-.tabbar-label {
-  font-size: 20rpx;
-  color: #666;
-}
-
-/* 发布按钮特殊样式 */
-.publish-btn {
-  position: relative;
-  top: -30rpx;
-}
-
-.publish-circle {
-  width: 110rpx;
-  height: 110rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6rpx 20rpx rgba(76, 175, 80, 0.4);
-}
-
-.publish-circle .tabbar-icon {
-  color: #fff;
-  font-size: 50rpx;
-  margin-bottom: 0;
 }
 </style>
