@@ -11,11 +11,12 @@
         <text class="opt-desc">分享生活 / 二手闲置 / 吐槽</text>
       </view>
       
-      <view class="option-card errand" @click="handlePublish('errand')">
-        <view class="icon">🏃‍♂️</view>
-        <text class="opt-title">发跑腿</text>
-        <text class="opt-desc">求代拿 / 帮忙办事 / 悬赏</text>
-      </view>
+       <!-- 这里绑定跳转 -->
+            <view class="option-card errand" @click="handlePublish('errand')">
+              <view class="icon">🏃‍♂️</view>
+              <text class="opt-title">发跑腿</text>
+              <text class="opt-desc">求代拿 / 悬赏 / 互助</text>
+            </view>
     </view>
   </view>
 </template>
@@ -35,14 +36,14 @@ export default {
         });
       } else if (type === 'errand') {
         // 跳转到跑腿发布页面（暂未实现）
-        uni.showToast({
-          title: '跑腿功能开发中',
-          icon: 'none'
+        uni.navigateTo({
+          url: '/pages/errand/publish'
         });
       }
     }
   }
 };
+
 </script>
 
 <style scoped>

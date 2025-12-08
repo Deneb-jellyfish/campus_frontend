@@ -74,6 +74,18 @@
 	  "style": {
 	    "navigationBarTitleText": "编辑个人资料"
 	  }
+	},
+	{
+	  "path": "pages/errand/publish",
+	  "style": {
+	    "navigationBarTitleText": "发布跑腿"
+	  }
+	},
+	{
+	  "path": "pages/errand/detail",
+	  "style": {
+	    "navigationBarTitleText": "跑腿详细内容"
+	  }
 	}
     
   ],
