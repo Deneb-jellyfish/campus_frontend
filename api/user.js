@@ -44,5 +44,10 @@ export const userApi = {
   checkIn() {
     if (USE_MOCK) return mockRequest(mock.checkIn)
     return request.post('/users/me/checkin')
+  },
+  updatePoints(params) {
+    if (USE_MOCK) return mockRequest(mock.updatePoints, params);
+    return request.post('/users/points/update', params);
   }
+
 }

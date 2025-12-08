@@ -48,18 +48,12 @@
 
         <!-- 操作栏 -->
         <view class="action-bar">
-          <view class="action-item">
-            <text class="action-icon">↗</text>
-            <text class="action-text">分享{{ post.shares > 0 ? post.shares : '' }}</text>
-          </view>
+          
           <view class="action-item" @click="handleCollect">
             <text class="action-icon" :class="{ active: isCollected }">{{ isCollected ? '★' : '☆' }}</text>
             <text class="action-text">收藏</text>
           </view>
-          <view class="action-item">
-            <text class="action-icon">📍</text>
-            <text class="action-text">蹲贴</text>
-          </view>
+          
           <view class="action-item" @click="handleLike">
             <text class="action-icon heart-icon" :class="{ active: isLiked }">
               {{ isLiked ? '❤️' : '🤍' }}

@@ -54,7 +54,8 @@ export const postsData = [
     product: { price: 980 },
     views: '14206',
     comments: '124',
-    likes: '234'
+    likes: '234',
+	isTop: false
   },
   {
     id: 2,
@@ -69,7 +70,8 @@ export const postsData = [
     images: [],
     views: '14206',
     comments: '124',
-    likes: '234'
+    likes: '234',
+	isTop: false
   },
   {
     id: 3,
@@ -84,7 +86,8 @@ export const postsData = [
     images: ['#90EE90', '#98FB98', '#87CEEB'],
     views: '8520',
     comments: '56',
-    likes: '892'
+    likes: '892',
+	isTop: false
   },
   {
     id: 4,
@@ -99,6 +102,7 @@ export const postsData = [
     images: [],
     views: '3240',
     comments: '45',
-    likes: '120'
+    likes: '120',
+	isTop: false
   }
 ];

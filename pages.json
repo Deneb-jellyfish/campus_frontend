@@ -34,6 +34,13 @@
 	    "navigationBarTitleText": "发布帖子"
 	  }
 	},
+	{
+	  "path": "pages/hot-posts/list",
+	  "style": {
+	    "navigationBarTitleText": "热门帖子",
+		"navigationStyle": "custom"
+	  }
+	},
     {
       "path": "pages/message/index",
       "style": {

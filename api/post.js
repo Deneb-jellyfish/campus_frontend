@@ -198,3 +198,16 @@ export function publishPost(data) {
     }, 500);
   });
 }
+
+import { setTop } from '../mock/post.js';
+
+/**
+ * 置顶帖子
+ * @param {Number} postId
+ */
+export const setPostTop = async (postId, isTop = true) => {
+  if (USE_MOCK) {
+    return await setTop(postId, isTop);
+  }
+};
+
