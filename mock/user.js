@@ -105,5 +105,24 @@ export default {
           ]
         }
       }
-    }
+    },
+	
+	async  updatePoints({ delta }) {
+	  await delay(300);
+	
+	  if (userInfo.points + delta < 0) {
+	    throw { code: 400, message: '积分不足' };
+	  }
+	
+	  userInfo.points += delta;
+	
+	  return {
+	    code: 200,
+	    message: '积分已更新',
+	    data: { points: userInfo.points }
+	  };
+	}
+	
+	
+
 }

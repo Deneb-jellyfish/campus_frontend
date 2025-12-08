@@ -1,32 +1,33 @@
 <template>
-  <view class="hot-topics-card">
+  <view class="hot-posts-card">
+    <!-- 标题 -->
     <view class="card-header">
-      <text class="card-title">🔥 热门话题</text>
+      <text class="card-title">🔥 热门帖子</text>
       <text class="more-btn" @click="handleMoreClick">查看更多 ›</text>
     </view>
-    <view class="topics-container">
-      <view 
-        class="topic-item" 
-        v-for="topic in topics" 
-        :key="topic.id" 
-        @click="handleTopicClick(topic)"
+
+    <!-- 热门帖子列表 -->
+    <view class="posts-container">
+      <view
+        class="post-item"
+        v-for="post in topics"
+        :key="post.id"
+        @click="handlePostClick(post)"
       >
-        <view class="topic-content">
-          <text class="topic-tag">#</text>
-          <text class="topic-title">{{ topic.title }}</text>
-          <text class="topic-icon">{{ topic.hot ? '🔥' : '' }}</text>
+        <!-- 内容区 -->
+        <view class="post-content">
+		  <text class="topic-tag">#</text>
+          <text class="post-text">
+            {{ post.title.length > 25 ? post.title.slice(0, 25) + '...' : post.title }}
+
+          </text>
+          <text class="post-hot-icon">{{ post.hot ? '🔥' : '' }}</text>
         </view>
-        <view class="topic-meta">
-          <text class="topic-views">累计{{ topic.views }}人气</text>
-          <view class="topic-avatars">
-            <text 
-              v-for="(avatar, index) in topic.participants" 
-              :key="index" 
-              class="avatar-small"
-            >
-              {{ avatar }}
-            </text>
-          </view>
+
+        <!-- 底部元信息 -->
+        <view class="post-meta">
+          <text class="post-views">浏览 {{ post.views }}</text>
+          
         </view>
       </view>
     </view>
@@ -35,26 +36,28 @@
 
 <script>
 export default {
-  name: 'HotTopics',
+  name: "HotTopics",
   props: {
     topics: {
       type: Array,
-      default: () => []
-    }
+      default: () => [],
+    },
   },
   methods: {
-    handleTopicClick(topic) {
-      this.$emit('topic-click', topic);
+    // 点击热门帖子 → 通知父组件
+    handlePostClick(post) {
+      this.$emit("topic-click", post); // 首页已经在监听这个事件
     },
+    // 查看更多
     handleMoreClick() {
-      this.$emit('more-click');
-    }
-  }
+      this.$emit("more-click");
+    },
+  },
 };
 </script>
 
 <style scoped>
-.hot-topics-card {
+.hot-posts-card {
   margin: 20rpx 30rpx;
   background-color: #fff;
   border-radius: 20rpx;
@@ -62,6 +65,7 @@ export default {
   box-shadow: 0 4rpx 15rpx rgba(0, 0, 0, 0.08);
 }
 
+/* 标题区 */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -81,71 +85,54 @@ export default {
   font-size: 26rpx;
   color: #999;
 }
+.topic-tag { color: #8bc34a; font-size: 32rpx; font-weight: bold; margin-right: 10rpx; }
 
-.topics-container {
+/* 内容列表 */
+.posts-container {
   display: flex;
   flex-direction: column;
   gap: 20rpx;
 }
 
-.topic-item {
+.post-item {
   padding: 20rpx;
   background-color: #fafafa;
   border-radius: 15rpx;
-  transition: all 0.3s;
+  transition: all 0.2s;
 }
 
-.topic-item:active {
+.post-item:active {
   background-color: #f0f0f0;
 }
 
-.topic-content {
+/* 内容文本 */
+.post-content {
   display: flex;
   align-items: center;
   margin-bottom: 15rpx;
 }
 
-.topic-tag {
-  color: #8bc34a;
-  font-size: 32rpx;
-  font-weight: bold;
-  margin-right: 10rpx;
-}
-
-.topic-title {
+.post-text {
   font-size: 28rpx;
   color: #333;
   flex: 1;
 }
 
-.topic-icon {
+.post-hot-icon {
   font-size: 30rpx;
+  margin-left: 10rpx;
 }
 
-.topic-meta {
+/* 底部数据 */
+.post-meta {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  margin-top: 10rpx;
 }
 
-.topic-views {
+.post-views,
+.post-likes {
   font-size: 24rpx;
   color: #999;
-}
-
-.topic-avatars {
-  display: flex;
-  gap: 10rpx;
-}
-
-.avatar-small {
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  background-color: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20rpx;
 }
 </style>

@@ -1,7 +1,10 @@
 <template>
   <view class="post-card">
     <!-- 帖子头部 -->
+	 <!-- ⭐ 置顶标识 -->
+	<view v-if="post.isTop" class="top-badge">📌置顶</view>
     <view class="post-header">
+		
       <view class="user-info" @click="handleUserClick">
         <view class="user-avatar">{{ post.userAvatar }}</view>
         <view class="user-detail">
@@ -47,10 +50,11 @@
         <text class="icon">👁</text>
         <text>{{ formatNumber(post.views) }}</text>
       </view>
-      <view class="footer-item" @click="handleCommentClick">
-        <text class="icon">💬</text>
-        <text>{{ formatNumber(post.comments) }}</text>
+      <view class="footer-item" @click="handleTopClick">
+        <text class="icon">📌</text>
+        <text>{{ post.isTop ? '取消置顶' : '置顶' }}</text>
       </view>
+
       <view class="footer-item" @click="handleLikeClick">
         <text class="icon">{{ isLiked ? '❤️' : '👍' }}</text>
         <text>{{ formatNumber(post.likes) }}</text>
@@ -113,7 +117,10 @@ export default {
     handleProductClick() {
       this.$emit('product-click', this.post);
     },
-    
+    // 点击置顶
+    handleTopClick() {
+      this.$emit('top-click', this.post);
+    },
     // 点击评论
     handleCommentClick() {
       this.$emit('comment-click', this.post);
@@ -129,7 +136,19 @@ export default {
 </script>
 
 <style scoped>
+.top-badge {
+  position: absolute;
+  top: 10rpx;
+  right: 10rpx;
+  background-color: #ff9800;
+  color: #fff;
+  padding: 6rpx 16rpx;
+  font-size: 22rpx;
+  border-radius: 8rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.15);
+}
 .post-card {
+  position: relative;
   background-color: #fff;
   border-radius: 15rpx;
   padding: 30rpx;
