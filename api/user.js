@@ -45,9 +45,29 @@ export const userApi = {
     if (USE_MOCK) return mockRequest(mock.checkIn)
     return request.post('/users/me/checkin')
   },
-  updatePoints(params) {
-    if (USE_MOCK) return mockRequest(mock.updatePoints, params);
-    return request.post('/users/points/update', params);
-  }
-
+  // 获取我的跑腿
+    getMyErrands(type = 'published') {
+      if (USE_MOCK) return mockRequest(mock.getMyErrands, { type })
+      return request.get('/users/me/errands', { type })
+    },
+  
+    // 获取关注列表
+    getFollowList(userId) {
+      if (USE_MOCK) return mockRequest(mock.getFollowList, userId)
+      return request.get(`/users/${userId}/following`)
+    },
+  
+    // 获取他人信息
+    getUserProfile(userId) {
+      if (USE_MOCK) return mockRequest(mock.getUserProfile, userId)
+      return request.get(`/users/${userId}`)
+    },
+  
+    // 关注操作 (isFollow: true关注, false取关)
+    toggleFollow(userId, isFollow) {
+      if (USE_MOCK) return mockRequest(mock.toggleFollow, userId)
+      const method = isFollow ? 'POST' : 'DELETE'
+      return request({ url: `/users/${userId}/follow`, method })
+    }
+  
 }

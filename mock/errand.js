@@ -28,7 +28,57 @@ let errands = [
     hiddenInfo: "到了直接敲门",
     createTime: Date.now() - 2000000,
     runnerId: null
-  }
+  },
+  // 2. 对应 mock/user.js -> getMyErrands -> publishedList (我发布的)
+    {
+      id: 201,
+      publisherId: 1001, // 1001是当前用户
+      publisher: { id: 1001, nickname: "小明", avatar: "" },
+      content: "帮拿快递",
+      pickupAddr: "南门",
+      deliveryAddr: "3栋",
+      bounty: 2.00,
+      currency: 2, // 现金
+      status: 0, // 待接单
+      hiddenInfo: "取件码 8888",
+      deadline: "2024-12-31 18:00:00",
+      version: 1,
+      createTime: Date.now() - 200000
+    },
+    {
+      id: 202,
+      publisherId: 1001, // 1001是当前用户
+      publisher: { id: 1001, nickname: "小明", avatar: "" },
+      content: "求借充电宝",
+      pickupAddr: "C楼",
+      deliveryAddr: "C楼",
+      bounty: 50,
+      currency: 1, // 积分
+      status: 2, // 已完成
+      hiddenInfo: "到了直接敲门",
+      deadline: "2024-10-01 12:00:00",
+      version: 1,
+      createTime: Date.now() - 86400000
+    },
+  
+    // 3. 对应 mock/user.js -> getMyErrands -> acceptedList (我接受的)
+    {
+      id: 301,
+      publisherId: 1002, // 别人发的
+      publisher: { id: 1002, nickname: "学习狂魔", avatar: "" },
+      content: "代买咖啡",
+      pickupAddr: "瑞幸",
+      deliveryAddr: "图书馆",
+      bounty: 3.00,
+      currency: 2,
+      status: 1, // 进行中
+      hiddenInfo: "手机号 13800000000", // 因为我接了单，所以我能看到
+      deadline: "2024-12-31 14:00:00",
+      version: 1,
+      createTime: Date.now() - 50000,
+      runnerId: 1001 // 接单人是我(1001)
+    }
+
 ]
 
 export default {

@@ -47,8 +47,8 @@
           <text class="num">12</text>
           <text class="label">获赞</text>
         </view>
-        <view class="stat-item">
-          <text class="num">5</text>
+        <view class="stat-item" @click="goToFollowList">
+          <text class="num">5</text> <!-- 这里以后最好换成 store 里的数据 -->
           <text class="label">关注</text>
         </view>
       </view>
@@ -182,12 +182,8 @@ const handleSettings = () => {
 // 3. 点击我的跑腿
 const handleMyErrands = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  // 这里假设你以后会做列表页，通常是共用一个 List 模板，传不同参数
-  // 例如: /pages/common/list?type=my_errands
-  uni.showToast({ title: '列表页开发中(Mock数据已备好)', icon: 'none' })
-  
-  // 如果你想测试 API 是否通了，可以在控制台打印：
-  userApi.getMyErrands().then(res => console.log('我的跑腿数据:', res))
+  // 跳转到刚写好的页面
+  uni.navigateTo({ url: '/pages/profile/my-errands' })
 }
 const handleLogout = () => {
   uni.showModal({
@@ -206,6 +202,11 @@ const handleLogout = () => {
 const handleMyPosts = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
   uni.showToast({ title: '查看列表页待开发', icon: 'none' })
+}
+
+const goToFollowList = () => {
+  if (!userStore.isLoggedIn) return
+  uni.navigateTo({ url: '/pages/profile/follow-list' })
 }
 </script>
 
