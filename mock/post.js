@@ -15,7 +15,8 @@ export const postsDetailData = {
     images: [],
     shares: 1,
     collects: 0,
-    likes: 1
+    likes: 1,
+	isTop: false
   },
   2: {
     id: 2,
@@ -29,7 +30,8 @@ export const postsDetailData = {
     shares: 5,
     collects: 12,
     likes: 234,
-    product: { price: 980 }
+    product: { price: 980 },
+	isTop: false
   },
   3: {
     id: 3,
@@ -42,7 +44,8 @@ export const postsDetailData = {
     images: ['/static/images/campus1.png', '/static/images/campus2.png', '/static/images/campus3.png'],
     shares: 8,
     collects: 25,
-    likes: 892
+    likes: 892,
+	isTop: false
   }
 };
 
@@ -161,3 +164,20 @@ export const commentsData = {
     }
   ]
 };
+
+import { postsData } from './index.js';  // ⭐ 引入首页用的帖子列表
+
+export async function setTop(postId, isTop = true) {
+  await delay(200);
+
+  // 首页数据
+  const post = postsData.find(p => p.id === postId);
+  if (post) post.isTop = isTop;
+
+  // 详情数据
+  if (postsDetailData[postId]) {
+    postsDetailData[postId].isTop = isTop;
+  }
+
+  return { code: 200, message: isTop ? '置顶成功' : '取消置顶成功' };
+}

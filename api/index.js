@@ -63,7 +63,7 @@ export const getPosts = async (params = {}) => {
   if (USE_MOCK) {
     await delay(300);
     
-    let result = [...postsData];
+    let result =postsData; 
     
     // 按分类筛选
     if (params.categoryId && params.categoryId !== 0) {

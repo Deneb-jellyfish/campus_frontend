@@ -106,9 +106,6 @@ export default {
           ]
         }
       }
-<<<<<<< Updated upstream
-    }
-=======
     },
 	
 	async  updatePoints({ delta }) {
@@ -264,5 +261,4 @@ export default {
 	      }
 	    }
 
->>>>>>> Stashed changes
 }

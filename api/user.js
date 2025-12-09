@@ -44,9 +44,6 @@ export const userApi = {
   checkIn() {
     if (USE_MOCK) return mockRequest(mock.checkIn)
     return request.post('/users/me/checkin')
-<<<<<<< Updated upstream
-  }
-=======
   },
   // 获取我的跑腿
     getMyErrands(type = 'published') {
@@ -91,5 +88,4 @@ export const userApi = {
 	  },
 
   
->>>>>>> Stashed changes
 }
