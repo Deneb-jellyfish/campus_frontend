@@ -44,5 +44,52 @@ export const userApi = {
   checkIn() {
     if (USE_MOCK) return mockRequest(mock.checkIn)
     return request.post('/users/me/checkin')
+<<<<<<< Updated upstream
   }
+=======
+  },
+  // 获取我的跑腿
+    getMyErrands(type = 'published') {
+      if (USE_MOCK) return mockRequest(mock.getMyErrands, { type })
+      return request.get('/users/me/errands', { type })
+    },
+  
+    // 获取关注列表
+    getFollowList(userId) {
+      if (USE_MOCK) return mockRequest(mock.getFollowList, userId)
+      return request.get(`/users/${userId}/following`)
+    },
+  
+    // 获取他人信息
+    getUserProfile(userId) {
+      if (USE_MOCK) return mockRequest(mock.getUserProfile, userId)
+      return request.get(`/users/${userId}`)
+    },
+  
+    // 关注操作 (isFollow: true关注, false取关)
+    toggleFollow(userId, isFollow) {
+      if (USE_MOCK) return mockRequest(mock.toggleFollow, userId)
+      const method = isFollow ? 'POST' : 'DELETE'
+      return request({ url: `/users/${userId}/follow`, method })
+    },
+	  // 3.4 我的帖子
+	  getMyPosts(page = 1) {
+	    if (USE_MOCK) return mockRequest(mock.getMyPosts, page)
+	    return request.get('/users/me/posts', { page })
+	  },
+	
+	  // 3.12 我的收藏
+	  getMyCollections(page = 1) {
+	    if (USE_MOCK) return mockRequest(mock.getMyCollections, page)
+	    return request.get('/users/me/collections', { page }) // 或 /collects
+	  },
+	
+	  // 3.9 获取粉丝列表
+	  getFollowers(userId) {
+	    if (USE_MOCK) return mockRequest(mock.getFollowers, userId)
+	    return request.get(`/users/${userId}/followers`)
+	  },
+
+  
+>>>>>>> Stashed changes
 }

@@ -18,7 +18,7 @@
     {
       "path": "pages/errand/index",
       "style": {
-        "navigationBarTitleText": "跑腿圈子",
+        "navigationStyle": "custom",
         "enablePullDownRefresh": true
       }
     },
@@ -59,13 +59,55 @@
 	{
 	  "path": "pages/login/index",
 	  "style": {
-	    "navigationBarTitleText": "用户登录"
+	    "navigationStyle": "custom"
 	  }
 	},
 	{
 	  "path": "pages/profile/edit",
 	  "style": {
-	    "navigationBarTitleText": "编辑个人资料"
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/errand/publish",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/errand/detail",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/profile/my-errands",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/profile/follow-list",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/user/home",
+	  "style": {
+	    "navigationBarTitleText": "他人主页"
+	  }
+	},
+	{
+	  "path": "pages/profile/my-post",
+	  "style": {
+	    "navigationStyle": "custom"
+	  }
+	},
+	{
+	  "path": "pages/profile/my-collection",
+	  "style": {
+	   "navigationStyle": "custom"
 	  }
 	}
     
