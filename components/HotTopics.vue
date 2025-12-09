@@ -26,7 +26,7 @@
 
         <!-- 底部元信息 -->
         <view class="post-meta">
-          <text class="post-views">浏览 {{ post.views }}</text>
+          <text class="post-views">点赞 {{ post.views }}</text>
           
         </view>
       </view>

@@ -120,45 +120,9 @@
       </view>
     </view>
 
-    <!-- 投票选项（仅投票话题显示） -->
-    <view v-if="selectedTopic === 4" class="vote-section">
-      <view class="section-title">投票选项</view>
-      
-      <view 
-        v-for="(option, index) in voteOptions" 
-        :key="index" 
-        class="vote-option-item"
-      >
-        <input 
-          class="vote-input" 
-          v-model="voteOptions[index]" 
-          :placeholder="'选项' + (index + 1)"
-        />
-        <text 
-          v-if="voteOptions.length > 2" 
-          class="delete-option" 
-          @click="removeVoteOption(index)"
-        >×</text>
-      </view>
-      
-      <view 
-        v-if="voteOptions.length < 6" 
-        class="add-option-btn" 
-        @click="addVoteOption"
-      >
-        <text>+ 添加选项</text>
-      </view>
-    </view>
+    
 
-    <!-- 更多设置 -->
-    <view class="more-settings">
-      <view class="setting-item" @click="toggleAnonymous">
-        <text class="setting-label">匿名发布</text>
-        <view class="switch" :class="{ active: isAnonymous }">
-          <view class="switch-dot"></view>
-        </view>
-      </view>
-    </view>
+  
 
     <!-- 底部发布按钮 -->
     <view class="bottom-bar">
@@ -186,7 +150,7 @@ export default {
         { id: 1, name: '闲置', icon: '' },
         { id: 2, name: '求助', icon: '' },
         { id: 3, name: '日常生活', icon: '' },
-        { id: 4, name: '投票', icon: '' },
+        
         { id: 5, name: '吐槽', icon: '' },
         { id: 6, name: '校招', icon: '' },
         { id: 7, name: '投稿', icon: '' },

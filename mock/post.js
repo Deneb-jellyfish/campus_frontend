@@ -57,7 +57,7 @@ export const commentsData = {
       userId: 101,
       avatar: '/static/avatars/avatar1.png',
       username: '同学c79756',
-      level: 'v4',
+     
       isAuthor: true,
       content: '立定跳远无沙坑可 > 2m',
       time: '14天前',
@@ -69,7 +69,7 @@ export const commentsData = {
       userId: 102,
       avatar: '/static/avatars/avatar2.png',
       username: '0721高手',
-      level: 'v5',
+      
       isAuthor: false,
       content: '请问待测基本是什么流程啊，老师会不会验脸啊，我也想干这一行',
       time: '14天前',
@@ -117,7 +117,7 @@ export const commentsData = {
       userId: 201,
       avatar: '/static/avatars/avatar4.png',
       username: '数码爱好者',
-      level: 'v3',
+      
       isAuthor: false,
       content: '什么配置啊？能说一下吗',
       time: '1天前',
@@ -141,7 +141,7 @@ export const commentsData = {
       userId: 202,
       avatar: '/static/avatars/avatar5.png',
       username: '穷学生一枚',
-      level: 'v2',
+      
       isAuthor: false,
       content: '800能包邮吗？',
       time: '12小时前',
@@ -155,7 +155,7 @@ export const commentsData = {
       userId: 301,
       avatar: '/static/logo.png',
       username: '摄影小白',
-      level: 'v1',
+      
       isAuthor: false,
       content: '好美啊！这是哪个校区？',
       time: '30分钟前',

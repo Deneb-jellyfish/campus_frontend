@@ -10,7 +10,7 @@
         <view class="user-detail">
           <view class="user-name-row">
             <text class="user-name">{{ post.userName }}</text>
-            <text class="user-level">{{ post.userLevel }}</text>
+            
           </view>
           <text class="post-time">{{ post.time }}</text>
         </view>

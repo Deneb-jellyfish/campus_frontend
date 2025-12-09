@@ -10,21 +10,21 @@ export const topicsData = [
     title: '感谢好心人请我吃疯4', 
     hot: true, 
     views: '123万',
-    participants: ['👤', '👤', '👤', '👤']
+    
   },
   { 
     id: 2, 
     title: '旅行的意义是什么', 
     hot: true, 
     views: '97万',
-    participants: ['👤', '👤', '👤', '👤']
+    
   },
   { 
     id: 3, 
     title: '今天的单子有点多啊', 
     hot: false, 
     views: '65万',
-    participants: ['👤', '👤', '👤', '👤']
+    
   }
 ];
 

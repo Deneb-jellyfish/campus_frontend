@@ -120,7 +120,7 @@ export function addComment(data) {
         userId: 999,
         username: '当前用户',
         avatar: 'https://via.placeholder.com/80',
-        level: 'LV.5',
+        
         content: data.content,
         time: '刚刚',
         likes: 0,
@@ -153,7 +153,7 @@ export function publishPost(data) {
         userId: 999,
         userAvatar: 'https://via.placeholder.com/80',
         userName: '当前用户',
-        userLevel: 'v3',
+        
         time: '刚刚',
         topicId: data.topicId,
         topicName: data.topicName,

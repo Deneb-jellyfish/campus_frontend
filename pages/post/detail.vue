@@ -21,7 +21,7 @@
             <view class="user-meta">
               <view class="user-name-row">
                 <text class="username">{{ post.userName }}</text>
-                <text class="user-level">{{ post.userLevel }}</text>
+                
               </view>
               <text class="post-time">{{ post.time }}</text>
             </view>
@@ -93,7 +93,7 @@
                 <view class="comment-user">
                   <text class="comment-username">{{ comment.username }}</text>
                   <text v-if="comment.isAuthor" class="author-tag">作者</text>
-                  <text class="comment-level">{{ comment.level }}</text>
+                  
                 </view>
                 <text class="comment-content" @click="replyToComment(comment)">
                   {{ comment.content }}
