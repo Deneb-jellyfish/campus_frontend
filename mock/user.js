@@ -116,7 +116,6 @@ export default {
 	  }
 	
 	  userInfo.points += delta;
-	
 	  return {
 	    code: 200,
 	    message: '积分已更新',
@@ -190,6 +189,76 @@ export default {
 	  async toggleFollow(id) {
 	    await delay(300)
 	    return { code: 200, message: '操作成功' }
-	  }
+	  },
+	  // 3.4 获取我的帖子 (确保符合你提供的 U05 格式)
+	    async getMyPosts(page) {
+	      await delay(400)
+	      return {
+	        code: 200,
+	        data: {
+	          list: [
+	            {
+	              id: 1,
+	              content: "今天天气真好，去图书馆打卡！#学习",
+	              images: ["https://picsum.photos/200/200?1"], // 模拟一张图
+	              createTime: "2023-10-01T12:00:00Z",
+	              stats: { views: 100, likes: 10, comments: 2 }
+	            },
+	            {
+	              id: 2,
+	              content: "食堂的红烧肉卖完了，难受...",
+	              images: [],
+	              createTime: "2023-10-02T12:00:00Z",
+	              stats: { views: 50, likes: 2, comments: 0 }
+	            }
+	          ],
+	          total: 2,
+	          hasMore: false
+	        }
+	      }
+	    },
+	  
+	    // 3.12 获取我的收藏 (带作者信息)
+	    async getMyCollections(page) {
+	      await delay(500)
+	      return {
+	        code: 200,
+	        message: "success",
+	        data: {
+	          list: [
+	            {
+	              id: 88, // 帖子的ID
+	              content: "期末复习重点整理，拿走不谢！",
+	              images: ["https://picsum.photos/200/200?2"],
+	              author: { 
+	                id: 1005,
+	                nickname: "学伯",
+	                avatar: "" 
+	              },
+	              stats: { views: 1000, likes: 500, comments: 20 },
+	              createTime: "2023-09-01T12:00:00Z",
+	              collectedAt: "2023-10-05T09:00:00Z"
+	            }
+	          ],
+	          total: 1,
+	          hasMore: false
+	        }
+	      }
+	    },
+	  
+	    // 3.9 获取粉丝列表
+	    async getFollowers(page) {
+	      await delay(400)
+	      return {
+	        code: 200,
+	        data: {
+	          list: [
+	            { id: 1008, nickname: "小学妹", avatarUrl: "", bio: "很高兴认识你", isFollowing: false }, // false代表我没回粉
+	            { id: 1009, nickname: "隔壁班长", avatarUrl: "", bio: "互关呀", isFollowing: true } // true代表互关
+	          ],
+	          total: 2
+	        }
+	      }
+	    }
 
 }

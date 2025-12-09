@@ -43,10 +43,10 @@
           <text class="num">{{ userStore.userInfo.points || 0 }}</text>
           <text class="label">我的积分</text>
         </view>
-        <view class="stat-item">
-          <text class="num">12</text>
-          <text class="label">获赞</text>
-        </view>
+        <view class="stat-item" @click="handleFollowers">
+                <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
+                <text class="label">粉丝</text>
+              </view>
         <view class="stat-item" @click="goToFollowList">
           <text class="num">5</text> <!-- 这里以后最好换成 store 里的数据 -->
           <text class="label">关注</text>
@@ -56,18 +56,21 @@
 
     <!-- 功能菜单 -->
     <view class="menu-list">
-      <view class="menu-item" @click="handleMyPosts">
-        <text>📝 我的发布</text>
-        <text class="arrow">></text>
-      </view>
+      <!-- 绑定跳转：我的发布 -->
+            <view class="menu-item" @click="handleMyPosts">
+              <text>📝 我的发布</text>
+              <text class="arrow">></text>
+            </view>
+
       <view class="menu-item" @click="handleMyErrands">
         <text>🏃‍♂️ 我的跑腿</text>
         <text class="arrow">></text>
       </view>
-      <view class="menu-item">
-        <text>⭐ 我的收藏</text>
-        <text class="arrow">></text>
-      </view>
+      <!-- 绑定跳转：我的收藏 -->
+            <view class="menu-item" @click="handleMyCollections">
+              <text>⭐ 我的收藏</text>
+              <text class="arrow">></text>
+            </view>
      <!-- 设置按钮 -->
      <view class="menu-item" @click="handleSettings">
        <text>⚙️ 个人资料设置</text>
@@ -199,14 +202,29 @@ const handleLogout = () => {
   })
 }
 
+
+
+// 新增跳转逻辑
 const handleMyPosts = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  uni.showToast({ title: '查看列表页待开发', icon: 'none' })
+  uni.navigateTo({ url: '/pages/profile/my-post' })
 }
 
+const handleMyCollections = () => {
+  if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
+  uni.navigateTo({ url: '/pages/profile/my-collection' })
+}
+
+const handleFollowers = () => {
+  if (!userStore.isLoggedIn) return
+  // 复用 follow-list 页面，传递 type=followers
+  uni.navigateTo({ url: '/pages/profile/follow-list?type=followers' })
+}
+
+// 别忘了把之前的 goToFollowList 改成传递 type=following
 const goToFollowList = () => {
   if (!userStore.isLoggedIn) return
-  uni.navigateTo({ url: '/pages/profile/follow-list' })
+  uni.navigateTo({ url: '/pages/profile/follow-list?type=following' })
 }
 </script>
 

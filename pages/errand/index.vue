@@ -1,12 +1,18 @@
 <template>
-  <view class="page-container">
-    <view class="nav-header">
-      <text class="title">跑腿大厅</text>
-      <!-- 发布按钮 -->
-      
-    </view>
+ <view class="page-container">
+     <!-- 自定义头部 (绿色) -->
+     <view class="custom-header green-theme">
+       <!-- 状态栏占位 (手机时间信号栏) -->
+       <view class="status-bar"></view>
+       <!-- 标题栏 -->
+       <view class="nav-bar">
+         <text class="page-title">跑腿圈子</text>
+       </view>
+     </view>
     
-    <scroll-view scroll-y class="content" @scrolltolower="loadMore">
+    
+    <!-- 内容区域 (需要加 padding-top 避开头部) -->
+        <scroll-view scroll-y class="content" @scrolltolower="loadMore">
       <view 
         v-for="item in list" 
         :key="item.id" 
@@ -102,6 +108,49 @@ const loadMore = () => {
   justify-content: center; /* 居中标题 */
   align-items: center; 
   z-index: 10; 
+}
+/* --- 自定义头部样式 --- */
+.custom-header {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 100;
+  padding-bottom: 20rpx;
+}
+
+.green-theme {
+  /* 你的绿色渐变 */
+  background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+  box-shadow: 0 4rpx 10rpx rgba(76, 175, 80, 0.1);
+}
+
+.status-bar {
+  /* 自动获取系统状态栏高度 */
+  height: var(--status-bar-height); 
+  width: 100%;
+}
+
+.nav-bar {
+  height: 88rpx; /* 标准导航栏高度 */
+  display: flex;
+  justify-content: center; /* 标题居中 */
+  align-items: center;
+  position: relative;
+}
+
+.page-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #1b5e20; /* 深绿色文字 */
+}
+
+/* 内容区域下移，给头部留出空间 */
+.content {
+  flex: 1;
+  padding: 20rpx;
+  box-sizing: border-box;
+  padding-bottom: 160rpx;
+  margin-top: calc(var(--status-bar-height) + 108rpx); /* 状态栏+导航栏高度+余量 */
 }
 .title { font-size: 40rpx; font-weight: 800; }
 .plus-btn { background: #E6F7FF; color: #1890FF; padding: 10rpx 24rpx; border-radius: 30rpx; font-size: 26rpx; font-weight: bold; }

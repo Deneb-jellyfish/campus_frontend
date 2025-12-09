@@ -68,6 +68,24 @@ export const userApi = {
       if (USE_MOCK) return mockRequest(mock.toggleFollow, userId)
       const method = isFollow ? 'POST' : 'DELETE'
       return request({ url: `/users/${userId}/follow`, method })
-    }
+    },
+	  // 3.4 我的帖子
+	  getMyPosts(page = 1) {
+	    if (USE_MOCK) return mockRequest(mock.getMyPosts, page)
+	    return request.get('/users/me/posts', { page })
+	  },
+	
+	  // 3.12 我的收藏
+	  getMyCollections(page = 1) {
+	    if (USE_MOCK) return mockRequest(mock.getMyCollections, page)
+	    return request.get('/users/me/collections', { page }) // 或 /collects
+	  },
+	
+	  // 3.9 获取粉丝列表
+	  getFollowers(userId) {
+	    if (USE_MOCK) return mockRequest(mock.getFollowers, userId)
+	    return request.get(`/users/${userId}/followers`)
+	  },
+
   
 }

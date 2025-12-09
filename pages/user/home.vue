@@ -22,10 +22,12 @@
       </view>
       
       <view class="stats-row">
-        <view class="stat">
-          <text class="num">{{ userInfo.stats.likes }}</text>
-          <text class="label">获赞</text>
-        </view>
+              <!-- 修改：获赞 -> 粉丝 -->
+              <view class="stat-item" @click="handleFollowers">
+                <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
+                <text class="label">粉丝</text>
+              </view>
+
         <view class="stat">
           <text class="num">{{ userInfo.stats.following }}</text>
           <text class="label">关注</text>
