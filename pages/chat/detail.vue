@@ -443,7 +443,7 @@ export default {
     // 查看资料
     viewProfile() {
       uni.navigateTo({
-        url: `/pages/user/profile?id=${this.userId}`
+        uni.navigateTo({ url: `/pages/user/home?id=${userId}` })
       });
     },
     

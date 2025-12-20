@@ -1,102 +1,84 @@
-// api/user.js
-import request from '@/utils/request' // 使用封装的请求
-import mock from '@/mock/user'
+import { useUserStore } from '@/stores/user'
 
-// 开关：控制是否使用 Mock 数据
-const USE_MOCK = false 
+// ✅ 电脑调试用 localhost，手机调试请改成本机局域网 IP (如 http://192.168.1.5:8080)
+const BASE_URL = 'http://localhost:8080'
 
-// 辅助函数：模拟 request 请求，保持和 uni.request 返回结构一致
-const mockRequest = async (mockFn, params) => {
-  try {
-    const res = await mockFn(params)
-    return res
-  } catch (error) {
-    throw error
+// --- 封装请求函数 ---
+const request = (options) => {
+  const userStore = useUserStore()
+  
+  const header = {
+    'Content-Type': 'application/json',
+    ...options.header
   }
+  
+  if (userStore.token) {
+    header['Authorization'] = `Bearer ${userStore.token}`
+  }
+
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url: BASE_URL + options.url,
+      method: options.method || 'GET',
+      data: options.data || {},
+      header: header,
+      success: (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res.data)
+        } else {
+          // 401 未登录处理可在此处添加
+          reject(res.data || { message: '请求失败' })
+        }
+      },
+      fail: (err) => {
+        console.error('API请求网络错误:', err)
+        reject({ message: '网络连接失败，请检查后端' })
+      }
+    })
+  })
 }
 
+// --- API 定义 ---
 export const userApi = {
   // 登录
   login(data) {
-    if (USE_MOCK) return mockRequest(mock.login, data)
-    return request.post('/auth/login', data)
+    return request({ url: '/api/auth/login', method: 'POST', data })
   },
   
-  // 更新个人资料
-  updateProfile(data) {
-    if (USE_MOCK) return mockRequest(mock.updateProfile, data)
-    const payload = {
-      nickname: data.nickname || '',
-      bio: data.bio || '',
-      avatarUrl: data.avatarUrl || '',
-      school: data.school || ''
-    }
-    return request.put('/users/me', payload)
+  // 注册
+  register(data) {
+    return request({ url: '/api/auth/register', method: 'POST', data })
   },
 
-  // 获取用户信息
+  // 获取登录用户信息 (我的)
   getUserInfo() {
-    if (USE_MOCK) return mockRequest(mock.getUserInfo)
-    return request.get('/users/me')
+    return request({ url: '/api/users/me', method: 'GET' })
   },
 
-  // 获取我的帖子
-  getMyPosts(page = 1) {
-    if (USE_MOCK) return mockRequest(mock.getMyPosts, page)
-    return request.get('/users/me/posts', { page })
+  // ✅ 获取指定用户主页信息 (支持查自己或他人)
+  getUserProfile(id) {
+    return request({ url: `/api/users/${id}`, method: 'GET' })
   },
   
-  // 3.6 获取签到状态
-  getCheckInStatus() {
-    if (USE_MOCK) return mockRequest(mock.getCheckInStatus)
-    return request.get('/users/me/checkin/status')
+  // ✅🔥 新增：获取指定用户的帖子列表
+  // 后端需要对应实现 GET /api/users/{id}/posts 接口
+  getUserPosts(id) {
+    return request({ url: `/api/users/${id}/posts`, method: 'GET' })
   },
-  
-  // 3.7 签到
-  checkIn() {
-    if (USE_MOCK) return mockRequest(mock.checkIn)
-    return request.post('/users/me/checkin')
+
+  // 关注/取关
+  toggleFollow(userId, isFollow) {
+    return request({
+      url: `/api/users/${userId}/follow`,
+      method: isFollow ? 'POST' : 'DELETE'
+    })
   },
-  // 获取我的跑腿
-    getMyErrands(type = 'published') {
-      if (USE_MOCK) return mockRequest(mock.getMyErrands, { type })
-      return request.get('/users/me/errands', { type })
-    },
-  
-    // 获取关注列表
-    getFollowList(userId) {
-      if (USE_MOCK) return mockRequest(mock.getFollowList, userId)
-      return request.get(`/users/${userId}/following`)
-    },
-  
-    // 获取他人信息
-    getUserProfile(userId) {
-      if (USE_MOCK) return mockRequest(mock.getUserProfile, userId)
-      return request.get(`/users/${userId}`)
-    },
-  
-    // 关注操作 (isFollow: true关注, false取关)
-    toggleFollow(userId, isFollow) {
-      if (USE_MOCK) return mockRequest(mock.toggleFollow, userId)
-      const method = isFollow ? 'POST' : 'DELETE'
-      return request({ url: `/users/${userId}/follow`, method })
-    },
-	  // 3.4 我的帖子
-	  getMyPosts(page = 1) {
-	    if (USE_MOCK) return mockRequest(mock.getMyPosts, page)
-	    return request.get('/users/me/posts', { page })
-	  },
-	
-  // 3.12 我的收藏
-  getMyCollections(page = 1) {
-    if (USE_MOCK) return mockRequest(mock.getMyCollections, page)
-    return request.get('/users/me/collects', { page, size: 10 })
+
+  // 获取粉丝/关注列表
+  getFollowers(userId) {
+    return request({ url: `/api/users/${userId}/followers`, method: 'GET' })
   },
-	
-	  // 3.9 获取粉丝列表
-	  getFollowers(userId) {
-	    if (USE_MOCK) return mockRequest(mock.getFollowers, userId)
-	    return request.get(`/users/${userId}/followers`)
-	  },
-  
+  getFollowList(userId) {
+    return request({ url: `/api/users/${userId}/following`, method: 'GET' })
+  }
 }

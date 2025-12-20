@@ -47,10 +47,10 @@
                 <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
                 <text class="label">粉丝</text>
               </view>
-        <view class="stat-item" @click="goToFollowList">
-          <text class="num">5</text> <!-- 这里以后最好换成 store 里的数据 -->
-          <text class="label">关注</text>
-        </view>
+<view class="stat-item" @click="goToFollowList">
+  <text class="num">{{ userStore.userInfo.stats?.following || 0 }}</text>
+  <text class="label">关注</text>
+</view>
       </view>
     </view>
 

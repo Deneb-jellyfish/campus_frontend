@@ -268,7 +268,7 @@ export default {
     },
 
     handleUserClick(post) {
-      uni.navigateTo({ url: `/pages/user/profile?id=${post.userId || post.id}` });
+      uni.navigateTo({ url: `/pages/user/home?id=${userId}` })
     },
 
     handlePostMore(post) {
