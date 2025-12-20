@@ -146,16 +146,23 @@ export default {
       ]);
     },
     
-    async fetchChatList() {
-      try {
-        const res = await getChatList();
-        if (res.code === 200) {
-          this.chatList = res.data.list;
-          this.unreadChat = res.data.unreadCount;
-        }
-      } catch (error) {
-        console.error('获取私信列表失败:', error);
-      }
+    async fetchChatList() {  
+      try {  
+        const res = await getChatList();  
+        if (res.code === 200) {  
+          // 按用户ID去重，保留每个用户的最新对话  
+          const uniqueChats = new Map()  
+          res.data.list.forEach(chat => {  
+            if (!uniqueChats.has(chat.userId)) {  
+              uniqueChats.set(chat.userId, chat)  
+            }  
+          })  
+          this.chatList = Array.from(uniqueChats.values())  
+          this.unreadChat = res.data.unreadCount;  
+        }  
+      } catch (error) {  
+        console.error('获取私信列表失败:', error);  
+      }  
     },
     
     async fetchNotifyList() {

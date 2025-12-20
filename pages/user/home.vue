@@ -63,7 +63,7 @@
       
       <!-- ✅ 帖子列表渲染 -->
       <view v-if="postsList.length > 0" class="post-list">
-        <view v-for="item in postsList" :key="item.id" class="post-item">
+        <view v-for="item in postsList" :key="item.id" class="post-item" @click="goToPostDetail(item.id)">
           
           <!-- 帖子文本内容 -->
           <text class="post-content">{{ item.content }}</text>
@@ -207,6 +207,12 @@ const getFullImageUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http')) return url
   return `${BASE_URL}${url.startsWith('/') ? url : '/' + url}`
+}
+
+const goToPostDetail = (postId) => {  
+  uni.navigateTo({   
+    url: `/pages/post/detail?id=${postId}`   
+  })  
 }
 
 // 图片预览

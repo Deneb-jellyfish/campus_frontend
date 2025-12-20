@@ -1,7 +1,11 @@
 <template>
   <view class="publish-page">
     <!-- 顶部导航 -->
-    
+    <view class="nav-header">
+      <text class="close-btn" @click="goBack">×</text>
+      <text class="nav-title">发布帖子</text>
+      <view class="placeholder"></view>
+    </view>
 
     <!-- 话题选择区域 -->
     <view class="topic-section">
@@ -12,11 +16,11 @@
           <text class="arrow" :class="{ expanded: showTopicPanel }">∧</text>
         </view>
       </view>
-      
+
       <!-- 话题标签列表 -->
       <view v-show="showTopicPanel" class="topic-list">
-        <view 
-          v-for="topic in topicList" 
+        <view
+          v-for="topic in topicList"
           :key="topic.id"
           class="topic-tag"
           :class="{ active: selectedTopic === topic.id }"
@@ -26,7 +30,7 @@
           <text>{{ topic.name }}</text>
         </view>
       </view>
-      
+
       <!-- 已选话题显示 -->
       <view v-if="selectedTopic && !showTopicPanel" class="selected-topic">
         <view class="topic-tag active">
@@ -39,14 +43,14 @@
 
     <!-- 内容输入区域 -->
     <view class="content-section">
-      <textarea 
+      <textarea
         class="content-input"
         v-model="content"
         placeholder="尽情发言吧..."
         :maxlength="2000"
         auto-height
       ></textarea>
-      
+
       <!-- 字数统计 -->
       <view class="word-count">{{ content.length }}/2000</view>
     </view>
@@ -54,19 +58,19 @@
     <!-- 图片上传区域 -->
     <view class="image-section">
       <view class="image-list">
-        <view 
-          v-for="(img, index) in imageList" 
-          :key="index" 
+        <view
+          v-for="(img, index) in imageList"
+          :key="index"
           class="image-item"
         >
           <image :src="img" mode="aspectFill" @click="previewImage(index)"></image>
           <view class="delete-btn" @click="deleteImage(index)">×</view>
         </view>
-        
+
         <!-- 添加图片按钮 -->
-        <view 
-          v-if="imageList.length < 9" 
-          class="add-image-btn" 
+        <view
+          v-if="imageList.length < 9"
+          class="add-image-btn"
           @click="chooseImage"
         >
           <text class="add-icon">+</text>
@@ -78,38 +82,38 @@
     <!-- 闲置商品信息（仅闲置话题显示） -->
     <view v-if="selectedTopic === 1" class="product-section">
       <view class="section-title">商品信息</view>
-      
+
       <view class="form-item">
         <text class="label">价格</text>
         <view class="price-input-wrapper">
           <text class="price-symbol">¥</text>
-          <input 
-            class="price-input" 
-            type="digit" 
-            v-model="price" 
+          <input
+            class="price-input"
+            type="digit"
+            v-model="price"
             placeholder="输入价格"
           />
         </view>
       </view>
-      
+
       <view class="form-item">
         <text class="label">交易方式</text>
         <view class="trade-options">
-          <view 
+          <view
             class="trade-option"
             :class="{ active: tradeMethod === 'face' }"
             @click="tradeMethod = 'face'"
           >
             <text>当面交易</text>
           </view>
-          <view 
+          <view
             class="trade-option"
             :class="{ active: tradeMethod === 'delivery' }"
             @click="tradeMethod = 'delivery'"
           >
             <text>邮寄</text>
           </view>
-          <view 
+          <view
             class="trade-option"
             :class="{ active: tradeMethod === 'both' }"
             @click="tradeMethod = 'both'"
@@ -120,14 +124,40 @@
       </view>
     </view>
 
-    
+    <!-- 投票选项区域（仅投票话题显示） -->
+    <view v-if="selectedTopic === 4" class="vote-section">
+      <view class="section-title">投票选项</view>
+      <view v-for="(option, index) in voteOptions" :key="index" class="vote-option-item">
+        <input
+          class="vote-input"
+          v-model="voteOptions[index]"
+          placeholder="请输入投票选项"
+        />
+        <text
+          class="delete-option"
+          @click="removeVoteOption(index)"
+          v-if="voteOptions.length > 2"
+        >×</text>
+      </view>
+      <view class="add-option-btn" @click="addVoteOption" v-if="voteOptions.length < 6">
+        <text>+ 添加选项</text>
+      </view>
+    </view>
 
-  
+    <!-- 更多设置 -->
+    <view class="more-settings">
+      <view class="setting-item">
+        <text class="setting-label">匿名发布</text>
+        <view class="switch" :class="{ active: isAnonymous }" @click="toggleAnonymous">
+          <view class="switch-dot"></view>
+        </view>
+      </view>
+    </view>
 
     <!-- 底部发布按钮 -->
     <view class="bottom-bar">
-      <view 
-        class="publish-btn" 
+      <view
+        class="publish-btn"
         :class="{ disabled: !canPublish }"
         @click="handlePublish"
       >
@@ -140,8 +170,11 @@
 <script>
 import { publishPost } from '../../api/post.js';
 import { getCategories } from '@/api/index.js';
+// 引入图片上传接口（需确保该接口已定义）
+import { commonApi } from '@/api/common.js';
 
 export default {
+  name: 'PublishPost',
   data() {
     return {
       // 话题相关
@@ -168,13 +201,17 @@ export default {
     };
   },
   async mounted() {
-    const res = await getCategories();
-    if (res.code === 200) {
-      const list = Array.isArray(res.data?.list) ? res.data.list : [];
-      this.topicList = list;
+    try {
+      const res = await getCategories();
+      if (res.code === 200) {
+        const list = Array.isArray(res.data?.list) ? res.data.list : [];
+        this.topicList = list;
+      }
+    } catch (error) {
+      console.error('获取话题列表失败:', error);
+      uni.showToast({ title: '获取话题失败', icon: 'none' });
     }
   },
-  
   computed: {
     // 已选话题数据
     selectedTopicData() {
@@ -202,14 +239,13 @@ export default {
       return hasContent && !this.publishing;
     }
   },
-  
   methods: {
-    // 返回
+    // 返回上一页
     goBack() {
       uni.navigateBack();
     },
     
-    // 切换话题面板
+    // 切换话题面板展开/收起
     toggleTopicPanel() {
       this.showTopicPanel = !this.showTopicPanel;
     },
@@ -220,7 +256,7 @@ export default {
       this.showTopicPanel = false;
     },
     
-    // 清除话题
+    // 清除已选话题
     clearTopic() {
       this.selectedTopic = null;
       this.showTopicPanel = true;
@@ -236,6 +272,9 @@ export default {
         sourceType: ['album', 'camera'],
         success: (res) => {
           this.imageList = [...this.imageList, ...res.tempFilePaths];
+        },
+        fail: () => {
+          uni.showToast({ title: '选择图片失败', icon: 'none' });
         }
       });
     },
@@ -267,32 +306,69 @@ export default {
       }
     },
     
-    // 切换匿名
+    // 切换匿名发布状态
     toggleAnonymous() {
       this.isAnonymous = !this.isAnonymous;
     },
     
+async uploadImages(tempFiles) {  
+  console.log('【开始上传图片】', tempFiles.length, '张')  
+    
+  const uploadPromises = tempFiles.map(file => {  
+    console.log('【上传单个文件】', file)  
+    return commonApi.uploadBatchImages(file)  
+  })  
+    
+  const results = await Promise.all(uploadPromises)  
+  console.log('【上传结果】', results)  
+    
+  // 修复响应格式解析  
+  const urls = results.map(res => {  
+    console.log('【单个响应】', res)  
+      
+    // 检查响应格式  
+    if (res.code === 200 && res.data) {  
+      // 如果data直接包含url  
+      if (res.data.url) {  
+        return res.data.url  
+      }  
+      // 如果data是url本身  
+      if (typeof res.data === 'string') {  
+        return res.data  
+      }  
+      // 如果data包含在list中  
+      if (res.data.list && res.data.list.length > 0) {  
+        return res.data.list[0].url  
+      }  
+    }  
+      
+    throw new Error('上传响应格式错误: ' + JSON.stringify(res))  
+  })  
+    
+  return urls  
+},
+    
     // 发布帖子
-    async handlePublish() {
-      if (!this.canPublish || this.publishing) return;
-      
-      // 验证
-      if (!this.content.trim() && this.imageList.length === 0) {
-        uni.showToast({ title: '请输入内容或上传图片', icon: 'none' });
-        return;
-      }
-      
-      this.publishing = true;
-      
-      try {
-        const postData = {
-          categoryId: this.selectedTopic,
-          topicId: this.selectedTopic,
-          topicName: this.selectedTopicData.name,
-          content: this.content,
-          images: this.imageList,
-          isAnonymous: this.isAnonymous
-        };
+    async handlePublish() {  
+      if (!this.canPublish || this.publishing) return;  
+        
+      this.publishing = true;  
+        
+      try {  
+        // 先上传图片  
+        let uploadedImages = [];  
+        if (this.imageList.length > 0) {  
+          uploadedImages = await this.uploadImages(this.imageList);  
+        }  
+          
+        const postData = {  
+          categoryId: this.selectedTopic,  
+          topicId: this.selectedTopic,  
+          topicName: this.selectedTopicData.name,  
+          content: this.content,  
+          images: uploadedImages,  
+          isAnonymous: this.isAnonymous  
+        };  
         
         // 闲置商品信息
         if (this.selectedTopic === 1) {
@@ -309,11 +385,11 @@ export default {
           };
         }
         
+        // 调用发布接口
         const res = await publishPost(postData);
         
         if (res.code === 200) {
           uni.showToast({ title: '发布成功', icon: 'success' });
-          
           // 延迟返回
           setTimeout(() => {
             uni.navigateBack();
@@ -690,5 +766,6 @@ export default {
 
 .publish-btn.disabled {
   background: #ccc;
+  pointer-events: none; /* 禁用点击 */
 }
 </style>

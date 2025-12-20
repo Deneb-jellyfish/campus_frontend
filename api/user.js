@@ -74,11 +74,32 @@ export const userApi = {
     })
   },
 
-  // 获取粉丝/关注列表
+  // 获取粉丝列表
   getFollowers(userId) {
     return request({ url: `/api/users/${userId}/followers`, method: 'GET' })
   },
-  getFollowList(userId) {
-    return request({ url: `/api/users/${userId}/following`, method: 'GET' })
+  
+  // 获取关注列表
+  getFollowList(userId) {  
+    return request({ url: `/api/users/${userId}/following`, method: 'GET' })  
+  },  
+      
+  // 签到 - 使用正确的后端路径  
+  checkIn() {  
+    return request({ url: '/api/users/me/checkin', method: 'POST' })  
+  },  
+    
+  // 新增的获取签到状态方法  
+  getCheckInStatus() {  
+    return request({ url: '/api/users/me/checkin/status', method: 'GET' })  
+  },
+  getMyPosts() {  
+    return request({ url: '/api/users/me/posts', method: 'GET' })  
+  },
+  getMyErrands(type) {  
+    return request({ url: `/api/users/me/errands?type=${type}`, method: 'GET' })  
+  },
+  updateProfile(data) {  
+    return request({ url: '/api/users/me', method: 'PUT', data })  
   }
 }

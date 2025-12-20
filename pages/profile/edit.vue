@@ -93,34 +93,31 @@ const handleChooseAvatar = () => {
 }
 
 // 保存资料
-const handleSave = async () => {
-  if (!form.nickname) return uni.showToast({ title: '昵称不能为空', icon: 'none' })
-  
-  loading.value = true
-  try {
-    const payload = {
-      avatarUrl: (form.avatarUrl || '').trim(),
-      nickname: (form.nickname || '').trim(),
-      school: (form.school || '').trim(),
-      bio: (form.bio || '').trim()
-    }
-    const res = await userApi.updateProfile(payload)
-    if (res.code === 200) {
-      // 更新 Store（以服务端为准）
-      const infoRes = await userApi.getUserInfo()
-      if (infoRes.code === 200) {
-        userStore.updateUserInfo(infoRes.data)
-      } else {
-        userStore.updateUserInfo(res.data)
-      }
-      uni.showToast({ title: '保存成功' })
-      setTimeout(() => uni.navigateBack(), 1000)
-    }
-  } catch (error) {
-    uni.showToast({ title: '保存失败', icon: 'none' })
-  } finally {
-    loading.value = false
-  }
+const handleSave = async () => {  
+  if (!form.nickname) return uni.showToast({ title: '昵称不能为空', icon: 'none' })  
+    
+  loading.value = true  
+  try {  
+    const payload = {  
+      avatarUrl: (form.avatarUrl || '').trim(),  
+      nickname: (form.nickname || '').trim(),  
+      school: (form.school || '').trim(),  
+      bio: (form.bio || '').trim()  
+    }  
+    console.log('【保存数据】', payload)  
+    const res = await userApi.updateProfile(payload)  
+    console.log('【保存响应】', res)  
+      
+    if (res.code === 200) {  
+      uni.showToast({ title: '保存成功' })  
+      setTimeout(() => uni.navigateBack(), 1000)  
+    }  
+  } catch (error) {  
+    console.error('【保存失败】', error)  
+    uni.showToast({ title: error.message || '保存失败', icon: 'none' })  
+  } finally {  
+    loading.value = false  // 确保loading状态被重置  
+  }  
 }
 </script>
 
