@@ -1,6 +1,9 @@
-<!-- pages/login/index.vue -->
 <template>
   <view class="login-container">
+	  <!-- 返回按钮 -->
+	  <view class="nav-back" @click="goBack">
+	    <text>←</text> <!-- 这里可以用 "←" 或者 "✕" -->
+	  </view>
     <view class="header">
       <text class="title">欢迎来到码住校园</text>
       <text class="sub-title">登录后体验更多精彩功能</text>
@@ -33,15 +36,13 @@
       </button>
 
       <view class="actions">
-        <text class="link">忘记密码?</text>
+        
+        <!-- 绑定跳转事件 -->
         <text class="link" @click="toggleMode">没有账号? 去注册</text>
       </view>
     </view>
     
-    <!-- 快捷测试提示 -->
-    <view class="dev-tip">
-      测试账号: student2024 / 123456
-    </view>
+   
   </view>
 </template>
 
@@ -70,15 +71,32 @@ const handleLogin = async () => {
       password: form.password
     })
     
+    // 注意：这里要适配后端返回结构。
+    // 如果后端返回 res.code === 200, res.data = { token: '...', user: {...} }
+    // 那么这里是对的。
     if (res.code === 200) {
-      // 存入 Pinia 和 Storage
-      userStore.setLoginState(res.data)
+      // 存入 Pinia 和 Storage (假设 setLoginState 方法已在 store 中定义)
+      // 如果 userStore 中没有 setLoginState，请确认 store 代码
+      // 或者直接 userStore.token = res.data.token; userStore.userInfo = res.data.user;
+      
+      // 推荐写法：
+      if (userStore.setLoginState) {
+          userStore.setLoginState(res.data)
+      } else {
+          // 兜底写法，防止 store 没更新
+          uni.setStorageSync('token', res.data.token)
+          uni.setStorageSync('userInfo', res.data.user)
+          // 强制刷新一下 store 状态（如果 store 是 ref 写法）
+          userStore.token = res.data.token
+          userStore.userInfo = res.data.user
+      }
       
       uni.showToast({ title: '登录成功' })
       
-      // 延迟返回，让用户看到提示
       setTimeout(() => {
-        uni.navigateBack()
+        // 登录成功后通常是跳回首页，或者返回上一页
+        // 如果是分享链接进来的，可能没有上一页，建议用 switchTab
+        uni.switchTab({ url: '/pages/index/index' })
       }, 1000)
     }
   } catch (error) {
@@ -91,8 +109,19 @@ const handleLogin = async () => {
   }
 }
 
+const goBack = () => {
+  const pages = getCurrentPages()
+  // 如果页面栈大于1，说明有上一页，直接返回
+  if (pages.length > 1) {
+    uni.navigateBack()
+  } else {
+    // 如果没有上一页（比如直接跳转过来的），回首页
+    uni.switchTab({ url: '/pages/index/index' })
+  }
+}
+// [修改] 跳转到注册页面
 const toggleMode = () => {
-  uni.showToast({ title: '注册功能请查看API文档 U01', icon: 'none' })
+  uni.navigateTo({ url: '/pages/login/register' })
 }
 </script>
 
@@ -117,6 +146,25 @@ const toggleMode = () => {
 .submit-btn:active { opacity: 0.9; }
 
 .actions { display: flex; justify-content: space-between; margin-top: 30rpx; font-size: 26rpx; color: #666; }
+.link { color: #52C41A; } /* 稍微加点颜色 */
 
 .dev-tip { margin-top: 100rpx; text-align: center; color: #ccc; font-size: 24rpx; }
+
+.nav-back {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  /* 避开手机状态栏高度，再加一点间距 */
+  padding-top: calc(var(--status-bar-height) + 20rpx);
+  padding-left: 30rpx;
+  padding-right: 30rpx;
+  padding-bottom: 20rpx;
+}
+
+.nav-back text {
+  font-size: 44rpx; /* 图标大小 */
+  color: #333;      /* 图标颜色，如果是深色背景改为 #fff */
+  font-weight: bold;
+}
 </style>

@@ -75,6 +75,17 @@
         <text>⚙️ 个人资料设置</text>
         <text class="arrow">></text>
       </view>
+	  
+	  <!-- [新增] 管理员入口 -->
+	 <!-- v-if="userStore.isAdmin" -->
+	  <view 
+	    
+	    class="menu-item admin-entry" 
+	    @click="handleAdmin"
+	  >
+	    <text>🛡️ 内容审核后台</text>
+	    <text class="arrow">></text>
+	  </view>
       
       <view 
         v-if="userStore.isLoggedIn" 
@@ -204,6 +215,10 @@ const goToFollowList = () => {
   uni.navigateTo({ url: '/pages/profile/follow-list?type=following' })
 }
 
+const handleAdmin = () => {
+  uni.navigateTo({ url: '/pages/admin/report-list' })
+}
+
 const handleLogout = () => {
   uni.showModal({
     title: '提示',
@@ -326,4 +341,13 @@ const handleLogout = () => {
   box-shadow: none;
 }
 .checkin-btn::after { border: none; }
+
+/* 在 style 中添加 */
+.admin-entry {
+  background-color: #fff1f0; /* 给管理员入口一个特殊的淡红色背景，突出显示 */
+}
+.admin-entry text {
+  color: #d4380d;
+  font-weight: bold;
+}
 </style>

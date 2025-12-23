@@ -110,3 +110,22 @@ export const userApi = {
       })
     }
 }
+export const adminApi = {
+  // [修正] status 默认为 0 (数字)，且使用 request({ ... }) 写法
+  getReports: (status = 0) => {
+    return request({
+      url: '/api/admin/reports',
+      method: 'GET',
+      data: { status }
+    })
+  },
+
+  // [修正] 处理举报
+  processReport: (id, action, note) => {
+    return request({
+      url: `/api/admin/reports/${id}/process`,
+      method: 'POST',
+      data: { action, note }
+    })
+  }
+}

@@ -111,12 +111,28 @@
 	    "navigationStyle": "custom"
 	  }
 	},
+	
 	{
 	  "path": "pages/profile/my-collection",
 	  "style": {
 	   "navigationStyle": "custom"
 	  }
-	}
+	},
+	{
+	  "path": "pages/admin/report-list",
+	  "style": {
+	    "navigationStyle": "custom", // 必须隐藏原生导航栏，因为你的页面代码里有自定义头部
+	    "enablePullDownRefresh": false
+	  }
+	},
+	// [新增] 注册页面
+	    {
+	      "path": "pages/login/register",
+	      "style": {
+	        "navigationStyle": "custom", // 这里可以用默认导航栏，或者 custom 随你
+	        "navigationBarTitleText": "注册账号"
+	      }
+	    }
     
   ],
   "globalStyle": {

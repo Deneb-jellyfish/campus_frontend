@@ -10,11 +10,18 @@ export const useUserStore = defineStore('user', () => {
   // 状态
   const token = ref(uni.getStorageSync('token') || '')
   const userInfo = ref(uni.getStorageSync('userInfo') || null)
-
+  
   // 计算属性
   const isLoggedIn = computed(() => !!token.value)
   const avatar = computed(() => userInfo.value?.avatarUrl || '../../static/default-avatar.png')
   const nickname = computed(() => userInfo.value?.nickname || '未登录用户')
+  
+  // [新增] 管理员判断逻辑
+    const isAdmin = computed(() => {
+      // 使用可选链 ?. 防止 userInfo 为 null 时报错
+      // 假设后端返回的管理员标识是 'ADMIN'
+      return userInfo.value?.role === 'ADMIN'
+    })
 
   // 动作：登录成功处理
   const setLoginState = (loginData) => {
@@ -47,6 +54,7 @@ export const useUserStore = defineStore('user', () => {
     token,
     userInfo,
     isLoggedIn,
+	isAdmin,
     avatar,
     nickname,
     setLoginState,
