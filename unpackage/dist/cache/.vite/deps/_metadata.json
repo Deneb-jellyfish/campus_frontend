@@ -1,22 +1,8 @@
 {
-<<<<<<< Updated upstream
   "hash": "0b4da946",
   "configHash": "4cefcdf4",
   "lockfileHash": "3cbf9f38",
   "browserHash": "f60787f0",
-=======
-<<<<<<< HEAD
-  "hash": "93ad6023",
-  "configHash": "22d1762e",
-  "lockfileHash": "3cbf9f38",
-  "browserHash": "cabda29d",
-=======
-  "hash": "0b4da946",
-  "configHash": "4cefcdf4",
-  "lockfileHash": "3cbf9f38",
-  "browserHash": "f60787f0",
->>>>>>> a776ba0dbbdff828ffc00950f860e222ed264b4e
->>>>>>> Stashed changes
   "optimized": {},
   "chunks": {}
 }

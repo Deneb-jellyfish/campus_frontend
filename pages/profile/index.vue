@@ -76,6 +76,12 @@
        <text>⚙️ 个人资料设置</text>
        <text class="arrow">></text>
      </view>
+	 
+	 <!-- 管理员入口 (仅演示用，实际需判断权限) -->
+	 <view class="menu-item admin-entry" @click="handleAdmin">
+	   <text>🛡️ 内容审核后台</text>
+	   <text class="arrow">></text>
+	 </view>
       
       <!-- 退出登录按钮 (U05) -->
       <view 
@@ -187,6 +193,13 @@ const handleMyErrands = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
   // 跳转到刚写好的页面
   uni.navigateTo({ url: '/pages/profile/my-errands' })
+}
+
+const handleAdmin = () => {
+  // 可以在这里简单判断一下权限
+  // if (userStore.userInfo?.role !== 'ADMIN') return uni.showToast({title:'无权限', icon:'none'})
+  
+  uni.navigateTo({ url: '/pages/admin/report-list' })
 }
 const handleLogout = () => {
   uni.showModal({
@@ -333,4 +346,14 @@ const goToFollowList = () => {
   box-shadow: none;
 }
 .checkin-btn::after { border: none; }
+
+
+.admin-entry {
+  margin-top: 20rpx;
+  background: #E6F7FF; /* 浅蓝色背景，区别于普通菜单 */
+}
+.admin-entry text {
+  color: #0050B3;
+  font-weight: bold;
+}
 </style>

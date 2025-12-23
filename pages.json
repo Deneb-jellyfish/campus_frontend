@@ -116,6 +116,13 @@
 	  "style": {
 	   "navigationStyle": "custom"
 	  }
+	},
+	{
+	      "path": "pages/admin/report-list",
+	      "style": {
+	        "navigationStyle": "custom", // 去除原生导航
+	        "enablePullDownRefresh": true
+	      }
 	}
     
   ],
