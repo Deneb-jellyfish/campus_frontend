@@ -22,16 +22,16 @@
         <!-- 举报详细描述 -->
         <view class="report-desc">
           <text class="label">举报描述：</text>
-          <text class="value">{{ item.description }}</text>
+          <text class="value">{{ item.description || '无' }}</text>
         </view>
         
         <!-- 被举报的内容快照 (灰色背景区域) -->
-        <view class="target-snapshot">
+        <view class="target-snapshot" v-if="item.targetSnapshot">
           <view class="snapshot-header">
             <text class="target-type">{{ item.targetType === 'POST' ? '帖子' : '评论' }}</text>
-            <text class="author">发布者: {{ item.targetSnapshot.author.nickname }}</text>
+            <text class="author">发布者: {{ item.targetSnapshot.author?.nickname || '未知用户' }}</text>
           </view>
-          <text class="content-preview">{{ item.targetSnapshot.content }}</text>
+          <text class="content-preview">{{ item.targetSnapshot.content || '无内容' }}</text>
         </view>
         
         <!-- 3. 操作按钮组 -->
@@ -58,7 +58,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { adminApi } from '@/api/admin'
+import { adminApi } from '@/api/user' // 假设 adminApi 也在 api/user.js 中导出，如果不是请修改路径
 
 const list = ref([])
 
@@ -66,16 +66,24 @@ onMounted(() => {
   loadData()
 })
 
-const goBack = () => uni.navigateBack()
+const goBack = () => {
+  uni.navigateBack()
+}
 
 const loadData = async () => {
   try {
-    const res = await adminApi.getReports('PENDING')
+    uni.showLoading({ title: '加载中...' })
+    const res = await adminApi.getReports('PENDING') // 获取待审核的举报
     if (res.code === 200) {
       list.value = res.data.list
+    } else {
+      uni.showToast({ title: res.message || '加载失败', icon: 'none' })
     }
   } catch (e) {
-    console.error(e)
+    console.error('加载举报列表失败:', e)
+    uni.showToast({ title: e.message || '网络错误', icon: 'none' })
+  } finally {
+    uni.hideLoading()
   }
 }
 
@@ -98,11 +106,11 @@ const handleProcess = (item, action) => {
         try {
           uni.showLoading({ title: '处理中' })
           await adminApi.processReport(item.id, action, note)
-          uni.showToast({ title: '处理完成' })
+          uni.showToast({ title: '处理完成', icon: 'success' })
           // 移除本地列表项
           list.value = list.value.filter(i => i.id !== item.id)
         } catch (error) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
+          uni.showToast({ title: error.message || '操作失败', icon: 'none' })
         } finally {
           uni.hideLoading()
         }
@@ -112,8 +120,9 @@ const handleProcess = (item, action) => {
 }
 
 const formatDate = (ts) => {
-  const d = new Date(ts)
-  return `${d.getMonth()+1}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}`
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}-${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 </script>
 
@@ -129,7 +138,12 @@ const formatDate = (ts) => {
 }
 .status-bar { height: var(--status-bar-height); }
 .nav-bar { height: 88rpx; display: flex; align-items: center; padding: 0 30rpx; }
-.back-arrow { font-size: 40rpx; color: #fff; font-weight: bold; padding: 10rpx; margin-left: -10rpx;}
+.back-btn {
+  /* 确保返回按钮区域可点击 */
+  padding: 10rpx 20rpx 10rpx 0; /* 增加点击区域 */
+  margin-left: -10rpx; /* 微调位置 */
+}
+.back-arrow { font-size: 40rpx; color: #fff; font-weight: bold; }
 .page-title { flex: 1; text-align: center; font-size: 34rpx; font-weight: bold; margin-right: 40rpx; }
 
 /* 列表容器 */

@@ -1,46 +1,100 @@
 // stores/user.js - 用户状态管理 (Pinia)
 
 import { defineStore } from 'pinia'
-
-import { setToken, removeToken, getToken } from '@/utils/request'
-
 import { ref, computed } from 'vue'
+import { userApi } from '@/api/user' // 引入 API
+
+// 注意：getToken, setToken, removeToken 不再直接从 '@/utils/request' 导入
+// 而是为了避免循环依赖，直接在 store 内部使用 uni.getStorageSync 等原生方法
+// 或者可以在单独的 localstorage.js 文件中封装
 
 export const useUserStore = defineStore('user', () => {
   // 状态
   const token = ref(uni.getStorageSync('token') || '')
-  const userInfo = ref(uni.getStorageSync('userInfo') || null)
+  // userInfo 初始化时加入默认的 stats 和 role 结构
+  const userInfo = ref(uni.getStorageSync('userInfo') || {
+    id: null,
+    username: '',
+    nickname: '未登录',
+    avatarUrl: '', // 与后端字段保持一致
+    school: '',
+    points: 0,
+    bio: '',
+    role: 'USER', // 默认用户角色
+    stats: { // 用户统计数据
+      followers: 0,
+      following: 0,
+      likes: 0 // 如果后端有返回
+    }
+  })
 
   // 计算属性
   const isLoggedIn = computed(() => !!token.value)
   const avatar = computed(() => userInfo.value?.avatarUrl || '../../static/default-avatar.png')
   const nickname = computed(() => userInfo.value?.nickname || '未登录用户')
 
-  // 动作：登录成功处理
+  // 动作：登录成功处理 (U02)
   const setLoginState = (loginData) => {
     token.value = loginData.token
-    userInfo.value = loginData.user
+    // 登录时后端返回的 user 信息可能不完整，只更新已有的字段
+    userInfo.value = { 
+        ...userInfo.value, 
+        id: loginData.user.id,
+        nickname: loginData.user.nickname,
+        points: loginData.user.points,
+        // 其他字段如 avatarUrl, school, bio, role 可能在 getUserInfo 后补充
+    }
     
     // 持久化存储
     uni.setStorageSync('token', loginData.token)
-    uni.setStorageSync('userInfo', loginData.user)
+    uni.setStorageSync('userInfo', userInfo.value) // 存储更新后的 userInfo
   }
 
   // 动作：更新用户信息 (U03)
   const updateUserInfo = (newInfo) => {
-    userInfo.value = { ...userInfo.value, ...newInfo }
+    // 深度合并 userInfo，尤其是 stats 对象
+    userInfo.value = { 
+        ...userInfo.value, 
+        ...newInfo,
+        stats: {
+            ...userInfo.value.stats, // 保留现有 stats
+            ...newInfo.stats         // 合并新 stats
+        }
+    }
     uni.setStorageSync('userInfo', userInfo.value)
   }
 
   // 动作：退出登录 (U05)
-  const logout = () => {
-    token.value = ''
-    userInfo.value = null
-    uni.removeStorageSync('token')
-    uni.removeStorageSync('userInfo')
-    
-    // 如果你在做 API 调用，这里应该调用 /auth/logout
-    // userApi.logout() 
+  const logout = async () => {
+    try {
+      // 1. 调用后端接口 (如果后端需要 token，请求封装中会自动带上)
+      if (token.value) {
+        await userApi.logout()
+      }
+    } catch (e) {
+      console.warn('退出接口调用失败，但这不影响前端清除状态', e)
+    } finally {
+      // 2. 无论后端成功与否，前端必须清除状态
+      token.value = ''
+      // 重置 userInfo 到初始状态
+      userInfo.value = {
+        id: null,
+        username: '',
+        nickname: '未登录',
+        avatarUrl: '',
+        school: '',
+        points: 0,
+        bio: '',
+        role: 'USER',
+        stats: {
+          followers: 0,
+          following: 0,
+          likes: 0
+        }
+      }
+      uni.removeStorageSync('token')
+      uni.removeStorageSync('userInfo')
+    }
   }
 
   return {
@@ -52,134 +106,5 @@ export const useUserStore = defineStore('user', () => {
     setLoginState,
     updateUserInfo,
     logout
-  }
-})
-
-
-// stores/chat.js - 聊天状态管理
-export const useChatStore = defineStore('chat', {
-  state: () => ({
-    socket: null,
-    isConnected: false,
-    conversationList: [],
-    currentConversation: null,
-    messages: {},
-    unreadCount: 0
-  }),
-  
-  getters: {
-    // 获取当前会话消息
-    currentMessages: (state) => {
-      if (!state.currentConversation) return []
-      return state.messages[state.currentConversation.id] || []
-    },
-    
-    // 获取未读消息数
-    totalUnread: (state) => {
-      return state.conversationList.reduce((total, conv) => total + (conv.unreadCount || 0), 0)
-    }
-  },
-  
-  actions: {
-    /**
-     * 初始化 WebSocket
-     */
-    initWebSocket(url, token) {
-      if (this.socket) {
-        this.socket.close()
-      }
-      
-      this.socket = uni.connectSocket({
-        url: `${url}?token=${token}`,
-        success: () => {
-          console.log('WebSocket 连接成功')
-        }
-      })
-      
-      // 监听连接打开
-      this.socket.onOpen(() => {
-        this.isConnected = true
-        console.log('WebSocket 已连接')
-      })
-      
-      // 监听消息接收
-      this.socket.onMessage((res) => {
-        const data = JSON.parse(res.data)
-        this.handleMessage(data)
-      })
-      
-      // 监听连接关闭
-      this.socket.onClose(() => {
-        this.isConnected = false
-        console.log('WebSocket 已断开')
-        
-        // 5秒后尝试重连
-        setTimeout(() => {
-          if (!this.isConnected) {
-            this.initWebSocket(url, token)
-          }
-        }, 5000)
-      })
-      
-      // 监听错误
-      this.socket.onError((err) => {
-        console.error('WebSocket 错误:', err)
-        this.isConnected = false
-      })
-    },
-    
-    /**
-     * 处理接收到的消息
-     */
-    handleMessage(data) {
-      const { type, message } = data
-      
-      if (type === 'message') {
-        // 新消息
-        const conversationId = message.conversationId
-        if (!this.messages[conversationId]) {
-          this.messages[conversationId] = []
-        }
-        this.messages[conversationId].push(message)
-        
-        // 更新会话列表
-        const conversation = this.conversationList.find(c => c.id === conversationId)
-        if (conversation) {
-          conversation.lastMessage = message
-          conversation.lastTime = message.createTime
-          if (message.fromUserId !== this.currentConversation?.otherUserId) {
-            conversation.unreadCount = (conversation.unreadCount || 0) + 1
-          }
-        }
-      }
-    },
-    
-    /**
-     * 发送消息
-     */
-    sendMessage(message) {
-      if (!this.isConnected) {
-        uni.showToast({
-          title: '连接已断开',
-          icon: 'none'
-        })
-        return
-      }
-      
-      this.socket.send({
-        data: JSON.stringify(message)
-      })
-    },
-    
-    /**
-     * 关闭连接
-     */
-    closeSocket() {
-      if (this.socket) {
-        this.socket.close()
-        this.socket = null
-        this.isConnected = false
-      }
-    }
   }
 })

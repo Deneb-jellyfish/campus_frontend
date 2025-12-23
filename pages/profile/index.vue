@@ -36,49 +36,50 @@
         </view>
       </view>
 
-      <!-- 积分数据 (保持不变) -->
+      <!-- 积分数据和关注/粉丝 (从 userInfo.stats 读取) -->
       <view class="stats" v-if="userStore.isLoggedIn">
         <view class="stat-item">
-          <!-- 这里的积分会动态变化 -->
           <text class="num">{{ userStore.userInfo.points || 0 }}</text>
           <text class="label">我的积分</text>
         </view>
-        <view class="stat-item" @click="handleFollowers">
-                <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
-                <text class="label">粉丝</text>
-              </view>
-<view class="stat-item" @click="goToFollowList">
-  <text class="num">{{ userStore.userInfo.stats?.following || 0 }}</text>
-  <text class="label">关注</text>
-</view>
+        <!-- 跳转到我的关注列表 -->
+        <view class="stat-item" @click="goToFollowList('following')">
+          <text class="num">{{ userStore.userInfo.stats?.following || 0 }}</text>
+          <text class="label">关注</text>
+        </view>
+        <!-- 跳转到我的粉丝列表 -->
+        <view class="stat-item" @click="goToFollowList('followers')">
+          <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
+          <text class="label">粉丝</text>
+        </view>
       </view>
     </view>
 
     <!-- 功能菜单 -->
     <view class="menu-list">
-      <!-- 绑定跳转：我的发布 -->
-            <view class="menu-item" @click="handleMyPosts">
-              <text>📝 我的发布</text>
-              <text class="arrow">></text>
-            </view>
+      <view class="menu-item" @click="handleMyPosts">
+        <text>📝 我的发布</text>
+        <text class="arrow">></text>
+      </view>
 
       <view class="menu-item" @click="handleMyErrands">
         <text>🏃‍♂️ 我的跑腿</text>
         <text class="arrow">></text>
       </view>
-      <!-- 绑定跳转：我的收藏 -->
-            <view class="menu-item" @click="handleMyCollections">
-              <text>⭐ 我的收藏</text>
-              <text class="arrow">></text>
-            </view>
-     <!-- 设置按钮 -->
-     <view class="menu-item" @click="handleSettings">
-       <text>⚙️ 个人资料设置</text>
-       <text class="arrow">></text>
-     </view>
+      
+      <view class="menu-item" @click="handleMyCollections">
+        <text>⭐ 我的收藏</text>
+        <text class="arrow">></text>
+      </view>
+     
+      <view class="menu-item" @click="handleSettings">
+        <text>⚙️ 个人资料设置</text>
+        <text class="arrow">></text>
+      </view>
 
      <!-- 管理员入口 (仅演示用，实际需判断权限) -->
-	 <view class="menu-item admin-entry" @click="handleAdmin">
+     <!-- 只有当用户角色是 ADMIN 时才显示此按钮 -->
+	 <view class="menu-item admin-entry" @click="handleAdmin" v-if="userStore.userInfo.role === 'ADMIN'">
 	   <text>🛡️ 内容审核后台</text>
 	   <text class="arrow">></text>
 	 </view>
@@ -91,9 +92,7 @@
       >
         <text>退出登录</text>
       </view>
-    </view
-	
-	
+    </view>
 	
 	
     <!-- 简易展示我的帖子 (联调测试用) -->
@@ -107,8 +106,6 @@
 
     <TabBar current-tab="profile" />
   </view>
-  
- 
 </template>
 
 <script setup>
@@ -121,6 +118,7 @@ import { userApi } from '@/api/user'
 const userStore = useUserStore()
 const myPosts = ref([])
 const isCheckedIn = ref(false) // 签到状态
+
 onShow(() => {
   uni.hideTabBar()
   // 每次显示页面，如果已登录，刷新一下用户信息（确保积分最新）
@@ -133,17 +131,24 @@ const refreshData = async () => {
   try {
     // 1. 并行获取用户信息和签到状态
     const [userRes, checkInRes, postRes] = await Promise.all([
-      userApi.getUserInfo(),
-      userApi.getCheckInStatus(),
-      userApi.getMyPosts()
+      userApi.getUserInfo(), // U03 获取当前用户信息
+      userApi.getCheckInStatus(), // U04 获取今日签到状态
+      userApi.getMyPosts() // U05 获取我的帖子列表
     ])
 
-    if (userRes.code === 200) userStore.updateUserInfo(userRes.data)
+    if (userRes.code === 200) {
+        userStore.updateUserInfo(userRes.data);
+        // 如果后端在 getUserInfo 中返回了 role，可以在这里更新
+        // if (userRes.data.role) {
+        //   userStore.updateUserRole(userRes.data.role);
+        // }
+    }
     if (checkInRes.code === 200) isCheckedIn.value = checkInRes.data.checkedIn
     if (postRes.code === 200) myPosts.value = postRes.data.list
     
   } catch (e) {
     console.error('刷新数据失败', e)
+    uni.showToast({ title: '刷新数据失败', icon: 'none' })
   }
 }
 
@@ -153,7 +158,7 @@ const handleCheckIn = async () => {
   
   try {
     uni.showLoading({ title: '签到中...' })
-    const res = await userApi.checkIn()
+    const res = await userApi.checkIn() // U04 每日签到
     
     if (res.code === 200) {
       uni.showToast({ title: res.message, icon: 'success' })
@@ -163,6 +168,8 @@ const handleCheckIn = async () => {
       userStore.updateUserInfo({
         points: res.data.totalPoints
       })
+    } else {
+        throw new Error(res.message || '签到失败');
     }
   } catch (error) {
     uni.showToast({ title: error.message || '签到失败', icon: 'none' })
@@ -184,29 +191,34 @@ const handleUserCardClick = () => {
 
 // 2. 点击设置 -> 编辑资料 (或者单独的设置页，这里先复用)
 const handleSettings = () => {
-  if (!userStore.isLoggedIn) return
+  if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
   uni.navigateTo({ url: '/pages/profile/edit' })
 }
 
 // 3. 点击我的跑腿
 const handleMyErrands = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  // 跳转到刚写好的页面
+  // 跳转到我的跑腿页面，该页面需要自己实现逻辑调用 /users/me/errands 接口
   uni.navigateTo({ url: '/pages/profile/my-errands' })
 }
+
+// 4. 点击内容审核后台
 const handleAdmin = () => {
-  // 可以在这里简单判断一下权限
-  // if (userStore.userInfo?.role !== 'ADMIN') return uni.showToast({title:'无权限', icon:'none'})
-  
+  // TODO: 后续完善用户角色判断
+  // if (userStore.userInfo.role !== 'ADMIN') {
+  //   return uni.showToast({title:'无权限访问', icon:'none'});
+  // }
   uni.navigateTo({ url: '/pages/admin/report-list' })
 }
+
+// 5. 退出登录
 const handleLogout = () => {
   uni.showModal({
     title: '提示',
     content: '确定要退出登录吗？',
-    success: (res) => {
+    success: async (res) => { // 添加 async
       if (res.confirm) {
-        userStore.logout()
+        await userStore.logout() // 等待退出操作完成
         myPosts.value = [] // 清空本地数据
         uni.showToast({ title: '已退出', icon: 'none' })
       }
@@ -214,33 +226,27 @@ const handleLogout = () => {
   })
 }
 
-
-
-// 新增跳转逻辑
+// 新增跳转逻辑：我的发布
 const handleMyPosts = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  uni.navigateTo({ url: '/pages/profile/my-post' })
+  uni.navigateTo({ url: '/pages/profile/my-posts' }) // 导航到 my-posts 页面
 }
 
+// 新增跳转逻辑：我的收藏
 const handleMyCollections = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  uni.navigateTo({ url: '/pages/profile/my-collection' })
+  uni.navigateTo({ url: '/pages/profile/my-collections' }) // 导航到 my-collections 页面
 }
 
-const handleFollowers = () => {
-  if (!userStore.isLoggedIn) return
-  // 复用 follow-list 页面，传递 type=followers
-  uni.navigateTo({ url: '/pages/profile/follow-list?type=followers' })
-}
-
-// 别忘了把之前的 goToFollowList 改成传递 type=following
-const goToFollowList = () => {
-  if (!userStore.isLoggedIn) return
-  uni.navigateTo({ url: '/pages/profile/follow-list?type=following' })
+// 统一处理关注/粉丝列表跳转
+const goToFollowList = (type) => {
+  if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
+  uni.navigateTo({ url: `/pages/profile/follow-list?type=${type}` }) // 导航到 follow-list 页面
 }
 </script>
 
 <style scoped>
+/* 保持原有样式 */
 .page-container {
   min-height: 100vh;
   background: #F5F5F5;
@@ -251,6 +257,7 @@ const goToFollowList = () => {
   background: #fff;
   padding: 100rpx 40rpx 40rpx;
   margin-bottom: 20rpx;
+  position: relative; /* 为签到按钮定位 */
 }
 
 .user-card {
@@ -312,6 +319,7 @@ const goToFollowList = () => {
 .recent-posts {
   background: #fff;
   padding: 30rpx 40rpx;
+  margin-top: 20rpx; /* 与上一个模块保持距离 */
 }
 .section-title { font-weight: bold; margin-bottom: 20rpx; font-size: 30rpx; }
 .mini-post {
@@ -327,6 +335,7 @@ const goToFollowList = () => {
   position: absolute;
   top: 40rpx;
   right: 40rpx;
+  z-index: 10; /* 确保在最上层 */
 }
 .checkin-btn {
   background: linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%);

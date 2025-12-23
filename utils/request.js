@@ -9,7 +9,7 @@ let USE_MOCK = false
 const BASE_URL = 'http://localhost:8080/api'
 
 // Mock 地址（本地）
-const MOCK_URL = '/api'
+const MOCK_URL = '/api' // Mock 地址通常与 BASE_URL 保持一致，或仅为路径
 
 // 请求超时时间
 const TIMEOUT = 10000
@@ -83,15 +83,17 @@ const responseInterceptor = (response) => {
   // HTTP 状态码处理
   if (statusCode === 200) {
     // 业务状态码处理
-    if (data.code === 0 || data.code === 200) {
-      return data // 返回完整后端 Result 结构
+    // 你的后端业务状态码 200 表示成功，其他是错误
+    if (data.code === 200) { // 保持与你的后端 API 文档一致
+      return data // 返回完整后端 Result 结构 {code, message, data}
     } else if (data.code === 401) {
       // Token 过期，清除并跳转登录
       uni.removeStorageSync(TOKEN_KEY)
       uni.reLaunch({
         url: '/pages/login/index'
       })
-      return Promise.reject(new Error('登录已过期'))
+      // Promise.reject 将错误传递给 .catch
+      return Promise.reject(new Error(data.message || '登录已过期'))
     } else {
       // 其他业务错误
       uni.showToast({
@@ -99,7 +101,7 @@ const responseInterceptor = (response) => {
         icon: 'none',
         duration: 2000
       })
-      return Promise.reject(new Error(data.message))
+      return Promise.reject(new Error(data.message || '业务错误'))
     }
   } else if (statusCode === 401) {
     uni.removeStorageSync(TOKEN_KEY)
@@ -117,94 +119,81 @@ const responseInterceptor = (response) => {
 }
 
 /**
- * 核心请求方法
+ * 核心请求方法 (原本的 executeRequest，现在作为主要 request 导出)
  */
 const request = (config) => {
   return new Promise((resolve, reject) => {
-    // 如果使用 Mock，直接返回 Mock 数据
+    // 如果使用 Mock，直接返回 Mock 数据 (这个逻辑通常由 Mock 库自动处理)
+    // 更好的做法是让 Mock 库拦截 uni.request，而不是在这里手动判断
+    // 暂时保留你的 Mock 逻辑，但它可能与 better-mock/mock.js 行为重复
     if (USE_MOCK) {
-      // 延迟模拟网络请求
-      setTimeout(() => {
-        // 构造 Mock URL
-        const mockUrl = config.url
-        
         // 在小程序和 APP 环境下，Better-Mock 会拦截请求
         // 在 H5 环境下，Mock.js 会拦截请求
-        
-        // 这里我们手动调用 Mock 数据（可选，取决于你的 Mock 配置）
-        try {
-          const mockData = getMockData(mockUrl, config.method, config.data)
-          
-          if (mockData) {
-            console.log('【Mock 数据】', mockData)
-            
-            if (mockData.code === 0 || mockData.code === 200) {
-              resolve(mockData.data)
-            } else {
-              uni.showToast({
-                title: mockData.message || 'Mock 请求失败',
-                icon: 'none'
-              })
-              reject(new Error(mockData.message))
-            }
-            return
-          }
-        } catch (error) {
-          console.error('Mock 数据获取失败:', error)
-        }
-        
-        // 如果 Mock 数据不存在，走正常请求流程
-        executeRequest(config, resolve, reject)
-      }, 300) // 模拟 300ms 网络延迟
-    } else {
-      // 生产环境直接请求
-      executeRequest(config, resolve, reject)
-    }
-  })
-}
+        // 所以这里可以简化，直接调用 uni.request，让 mock 库去处理拦截
+        // 或者保留你的延迟模拟，但不需要手动 getMockData
+        setTimeout(() => {
+            // 应用请求拦截器
+            const finalConfig = requestInterceptor({
+                url: getBaseUrl() + config.url, // Mock URL
+                method: config.method || 'GET',
+                data: config.data || {},
+                header: {
+                    'Content-Type': 'application/json',
+                    ...config.header
+                },
+                timeout: config.timeout || TIMEOUT
+            })
 
-/**
- * 执行实际的网络请求
- */
-const executeRequest = (config, resolve, reject) => {
-  // 应用请求拦截器
-  const finalConfig = requestInterceptor({
-    url: getBaseUrl() + config.url,
-    method: config.method || 'GET',
-    data: config.data || {},
-    header: {
-      'Content-Type': 'application/json',
-      ...config.header
-    },
-    timeout: config.timeout || TIMEOUT
-  })
-  
-  uni.request({
-    ...finalConfig,
-    success: (res) => {
-      Promise.resolve(responseInterceptor(res))
-        .then(resolve)
-        .catch(reject)
-    },
-    fail: (err) => {
-      console.error('请求失败:', err)
-      uni.showToast({
-        title: '网络请求失败',
-        icon: 'none'
-      })
-      reject(err)
+            uni.request({
+                ...finalConfig,
+                success: (res) => {
+                    Promise.resolve(responseInterceptor(res))
+                        .then(resolve)
+                        .catch(reject)
+                },
+                fail: (err) => {
+                    console.error('Mock请求失败:', err)
+                    uni.showToast({
+                        title: 'Mock请求失败',
+                        icon: 'none'
+                    })
+                    reject(err)
+                }
+            })
+        }, 300); // 模拟 300ms 网络延迟
+        return;
     }
-  })
-}
 
-/**
- * 获取 Mock 数据（简化版，实际由 Better-Mock 自动处理）
- * 这个函数是可选的，如果你的 Mock 配置正确，可以删除
- */
-const getMockData = (url, method, data) => {
-  // 这里可以根据 URL 返回对应的 Mock 数据
-  // 但通常 Better-Mock 会自动拦截并返回，无需手动实现
-  return null
+    // 生产环境或 Mock 未开启时，执行实际请求
+    // 应用请求拦截器
+    const finalConfig = requestInterceptor({
+      url: getBaseUrl() + config.url,
+      method: config.method || 'GET',
+      data: config.data || {},
+      header: {
+        'Content-Type': 'application/json',
+        ...config.header
+      },
+      timeout: config.timeout || TIMEOUT
+    })
+    
+    uni.request({
+      ...finalConfig,
+      success: (res) => {
+        Promise.resolve(responseInterceptor(res))
+          .then(resolve)
+          .catch(reject)
+      },
+      fail: (err) => {
+        console.error('请求失败:', err)
+        uni.showToast({
+          title: '网络请求失败',
+          icon: 'none'
+        })
+        reject(err)
+      }
+    })
+  })
 }
 
 /**
@@ -258,56 +247,62 @@ export const del = (url, data = {}, config = {}) => {
 /**
  * 文件上传
  */
-export const upload = (filePath, data = {}) => {
+export const upload = (filePath, uploadUrl, data = {}) => { // 增加 uploadUrl 参数
   return new Promise((resolve, reject) => {
     // Mock 环境下模拟上传
     if (USE_MOCK) {
       setTimeout(() => {
         resolve({
-          url: 'https://picsum.photos/400/600?random=' + Date.now(),
-          width: 400,
-          height: 600
+          code: 200,
+          message: '上传成功 (Mock)',
+          data: {
+              url: 'https://picsum.photos/400/600?random=' + Date.now(),
+              originalName: 'mock_image.jpg',
+              size: 12345,
+              mimeType: 'image/jpeg',
+              width: 400,
+              height: 600,
+              hash: 'mockhash'
+          }
         })
       }, 500)
-      return
+      return;
     }
     
     // 真实上传
     const token = uni.getStorageSync(TOKEN_KEY)
     
     uni.uploadFile({
-      url: BASE_URL + '/upload',
+      url: getBaseUrl() + uploadUrl, // 使用传入的 uploadUrl
       filePath,
-      name: 'file',
+      name: 'file', // 默认文件字段名，如果后端不是 'file'，需要调整
       formData: data,
       header: {
         'Authorization': token ? `Bearer ${token}` : ''
       },
       success: (res) => {
-        const data = JSON.parse(res.data)
-        if (data.code === 0) {
-          resolve(data.data)
+        const responseData = JSON.parse(res.data)
+        if (responseData.code === 200) {
+          resolve(responseData) // 返回整个响应数据，包含 code, message, data
         } else {
           uni.showToast({
-            title: data.message || '上传失败',
+            title: responseData.message || '上传失败',
             icon: 'none'
           })
-          reject(new Error(data.message))
+          reject(new Error(responseData.message || '上传失败'))
         }
       },
-      fail: reject
+      fail: (err) => {
+        console.error('上传失败:', err)
+        uni.showToast({ title: '上传失败', icon: 'none' })
+        reject(err)
+      }
     })
   })
 }
 
-// 默认导出，兼容现有调用方式
-export default {
-  get,
-  post,
-  put,
-  del,
-  upload
-}
+// 默认导出核心 request 函数，方便某些地方直接 import request from '@/utils/request'
+export default request;
 
 /**
  * Token 管理
