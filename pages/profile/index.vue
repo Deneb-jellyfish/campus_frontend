@@ -1,7 +1,7 @@
 <template>
   <view class="page-container">
     <view class="profile-header">
-      <!-- 签到按钮 (绝对定位在右上角) -->
+      <!-- 签到按钮 -->
       <view class="checkin-btn-wrapper" v-if="userStore.isLoggedIn">
         <button 
           class="checkin-btn" 
@@ -13,7 +13,7 @@
         </button>
       </view>
 
-      <!-- 用户卡片 (保持不变) -->
+      <!-- 用户卡片 -->
       <view class="user-card" @click="handleUserCardClick">
         <image 
           v-if="userStore.isLoggedIn && userStore.avatar"
@@ -36,48 +36,46 @@
         </view>
       </view>
 
-      <!-- 积分数据 (保持不变) -->
+      <!-- 积分数据 -->
       <view class="stats" v-if="userStore.isLoggedIn">
         <view class="stat-item">
-          <!-- 这里的积分会动态变化 -->
           <text class="num">{{ userStore.userInfo.points || 0 }}</text>
           <text class="label">我的积分</text>
         </view>
         <view class="stat-item" @click="handleFollowers">
-                <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
-                <text class="label">粉丝</text>
-              </view>
-<view class="stat-item" @click="goToFollowList">
-  <text class="num">{{ userStore.userInfo.stats?.following || 0 }}</text>
-  <text class="label">关注</text>
-</view>
+          <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
+          <text class="label">粉丝</text>
+        </view>
+        <view class="stat-item" @click="goToFollowList">
+          <text class="num">{{ userStore.userInfo.stats?.following || 0 }}</text>
+          <text class="label">关注</text>
+        </view>
       </view>
     </view>
 
     <!-- 功能菜单 -->
     <view class="menu-list">
-      <!-- 绑定跳转：我的发布 -->
-            <view class="menu-item" @click="handleMyPosts">
-              <text>📝 我的发布</text>
-              <text class="arrow">></text>
-            </view>
+      <view class="menu-item" @click="handleMyPosts">
+        <text>📝 我的发布</text>
+        <text class="arrow">></text>
+      </view>
 
       <view class="menu-item" @click="handleMyErrands">
         <text>🏃‍♂️ 我的跑腿</text>
         <text class="arrow">></text>
       </view>
-      <!-- 绑定跳转：我的收藏 -->
-            <view class="menu-item" @click="handleMyCollections">
-              <text>⭐ 我的收藏</text>
-              <text class="arrow">></text>
-            </view>
-     <!-- 设置按钮 -->
-     <view class="menu-item" @click="handleSettings">
-       <text>⚙️ 个人资料设置</text>
-       <text class="arrow">></text>
-     </view>
       
-      <!-- 退出登录按钮 (U05) -->
+      <!-- 跳转到我的收藏 -->
+      <view class="menu-item" @click="handleMyCollections">
+        <text>⭐ 我的收藏</text>
+        <text class="arrow">></text>
+      </view>
+
+      <view class="menu-item" @click="handleSettings">
+        <text>⚙️ 个人资料设置</text>
+        <text class="arrow">></text>
+      </view>
+      
       <view 
         v-if="userStore.isLoggedIn" 
         class="menu-item logout"
@@ -85,28 +83,32 @@
       >
         <text>退出登录</text>
       </view>
-    </view
-	
-	
-	
-	
-    <!-- 简易展示我的帖子 (联调测试用) -->
+    </view>
+
+    <!-- 最近发布列表 -->
     <view v-if="userStore.isLoggedIn && myPosts.length > 0" class="recent-posts">
       <view class="section-title">最近发布</view>
-      <view v-for="post in myPosts" :key="post.id" class="mini-post">
+      <!-- [Task 2] 添加点击事件 handlePostClick -->
+      <view 
+        v-for="post in myPosts" 
+        :key="post.id" 
+        class="mini-post"
+        @click="handlePostClick(post.id)"
+      >
         <text class="post-content">{{ post.content }}</text>
-        <text class="post-date">浏览 {{ post.stats.views }}</text>
+        <view class="post-meta">
+          <text class="post-date">浏览 {{ post.stats?.views || 0 }}</text>
+          <text class="post-date" style="margin-left: 20rpx">❤️ {{ post.stats?.likes || 0 }}</text>
+        </view>
       </view>
     </view>
 
     <TabBar current-tab="profile" />
   </view>
-  
- 
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import TabBar from '@/components/TabBar.vue'
 import { useUserStore } from '@/stores/user'
@@ -114,10 +116,10 @@ import { userApi } from '@/api/user'
 
 const userStore = useUserStore()
 const myPosts = ref([])
-const isCheckedIn = ref(false) // 签到状态
+const isCheckedIn = ref(false)
+
 onShow(() => {
   uni.hideTabBar()
-  // 每次显示页面，如果已登录，刷新一下用户信息（确保积分最新）
   if (userStore.isLoggedIn) {
     refreshData()
   }
@@ -125,11 +127,10 @@ onShow(() => {
 
 const refreshData = async () => {
   try {
-    // 1. 并行获取用户信息和签到状态
     const [userRes, checkInRes, postRes] = await Promise.all([
       userApi.getUserInfo(),
       userApi.getCheckInStatus(),
-      userApi.getMyPosts()
+      userApi.getMyPosts({ page: 1, size: 5 }) // 限制只取前5条显示在主页
     ])
 
     if (userRes.code === 200) userStore.updateUserInfo(userRes.data)
@@ -141,22 +142,15 @@ const refreshData = async () => {
   }
 }
 
-// 签到逻辑
 const handleCheckIn = async () => {
   if (isCheckedIn.value) return
-  
   try {
     uni.showLoading({ title: '签到中...' })
     const res = await userApi.checkIn()
-    
     if (res.code === 200) {
-      uni.showToast({ title: res.message, icon: 'success' })
+      uni.showToast({ title: '签到成功', icon: 'success' })
       isCheckedIn.value = true
-      
-      // 更新 Store 中的积分
-      userStore.updateUserInfo({
-        points: res.data.totalPoints
-      })
+      userStore.updateUserInfo({ points: res.data.totalPoints })
     }
   } catch (error) {
     uni.showToast({ title: error.message || '签到失败', icon: 'none' })
@@ -165,29 +159,51 @@ const handleCheckIn = async () => {
   }
 }
 
+// [Task 2] 跳转到帖子详情
+const handlePostClick = (postId) => {
+  // 假设你的帖子详情页路径是 /pages/post/detail
+  uni.navigateTo({ url: `/pages/post/detail?id=${postId}` })
+}
 
-// 1. 点击用户卡片 -> 编辑资料
 const handleUserCardClick = () => {
   if (!userStore.isLoggedIn) {
     uni.navigateTo({ url: '/pages/login/index' })
   } else {
-    // 跳转到编辑页
     uni.navigateTo({ url: '/pages/profile/edit' })
   }
 }
 
-// 2. 点击设置 -> 编辑资料 (或者单独的设置页，这里先复用)
 const handleSettings = () => {
   if (!userStore.isLoggedIn) return
   uni.navigateTo({ url: '/pages/profile/edit' })
 }
 
-// 3. 点击我的跑腿
 const handleMyErrands = () => {
   if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  // 跳转到刚写好的页面
   uni.navigateTo({ url: '/pages/profile/my-errands' })
 }
+
+const handleMyPosts = () => {
+  if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
+  uni.navigateTo({ url: '/pages/profile/my-post' }) // 注意文件名一致性
+}
+
+const handleMyCollections = () => {
+  if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
+  // [Task 1] 跳转到新建的页面
+  uni.navigateTo({ url: '/pages/profile/my-collection' })
+}
+
+const handleFollowers = () => {
+  if (!userStore.isLoggedIn) return
+  uni.navigateTo({ url: '/pages/profile/follow-list?type=followers' })
+}
+
+const goToFollowList = () => {
+  if (!userStore.isLoggedIn) return
+  uni.navigateTo({ url: '/pages/profile/follow-list?type=following' })
+}
+
 const handleLogout = () => {
   uni.showModal({
     title: '提示',
@@ -195,36 +211,12 @@ const handleLogout = () => {
     success: (res) => {
       if (res.confirm) {
         userStore.logout()
-        myPosts.value = [] // 清空本地数据
+        myPosts.value = []
+        isCheckedIn.value = false
         uni.showToast({ title: '已退出', icon: 'none' })
       }
     }
   })
-}
-
-
-
-// 新增跳转逻辑
-const handleMyPosts = () => {
-  if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  uni.navigateTo({ url: '/pages/profile/my-post' })
-}
-
-const handleMyCollections = () => {
-  if (!userStore.isLoggedIn) return uni.navigateTo({ url: '/pages/login/index' })
-  uni.navigateTo({ url: '/pages/profile/my-collection' })
-}
-
-const handleFollowers = () => {
-  if (!userStore.isLoggedIn) return
-  // 复用 follow-list 页面，传递 type=followers
-  uni.navigateTo({ url: '/pages/profile/follow-list?type=followers' })
-}
-
-// 别忘了把之前的 goToFollowList 改成传递 type=following
-const goToFollowList = () => {
-  if (!userStore.isLoggedIn) return
-  uni.navigateTo({ url: '/pages/profile/follow-list?type=following' })
 }
 </script>
 
@@ -239,6 +231,7 @@ const goToFollowList = () => {
   background: #fff;
   padding: 100rpx 40rpx 40rpx;
   margin-bottom: 20rpx;
+  position: relative; /* 为签到按钮定位 */
 }
 
 .user-card {
@@ -307,10 +300,10 @@ const goToFollowList = () => {
   border-bottom: 1rpx solid #eee;
 }
 .post-content { font-size: 28rpx; color: #333; margin-bottom: 10rpx; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.post-meta { display: flex; align-items: center; }
 .post-date { font-size: 22rpx; color: #999; }
 
-
-/* 新增签到按钮样式 */
+/* 签到按钮样式 */
 .checkin-btn-wrapper {
   position: absolute;
   top: 40rpx;

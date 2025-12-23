@@ -1,86 +1,193 @@
 <template>
   <view class="container">
-    <view class="custom-header white-theme">
-      <view class="status-bar"></view>
-      <view class="nav-bar">
-        <view class="back-btn" @click="goBack"><text class="back-arrow">←</text></view>
-        <text class="page-title">我的收藏</text>
-      </view>
+    <!-- 自定义导航 -->
+    <view class="nav-header">
+      <view class="back-btn" @click="goBack">←</view>
+      <text class="title">我的收藏</text>
     </view>
+    
+    <!-- 列表内容 -->
+    <scroll-view scroll-y class="list-container" @scrolltolower="loadMore">
+      <!-- 加载中且列表为空 -->
+      <view v-if="loading && list.length === 0" class="loading-state">加载中...</view>
+      
+      <!-- 空状态 -->
+      <view v-else-if="!loading && list.length === 0" class="empty-state">
+        <text>暂无收藏内容</text>
+      </view>
 
-    <view class="list-wrapper">
-      <view v-for="item in list" :key="item.id" class="post-card" @click="goToDetail(item)">
-        <!-- 头部显示原作者 -->
-        <view class="card-header">
-          <view class="user-info">
-            <image :src="item.author?.avatar || '../../static/default-avatar.png'" class="avatar-img" mode="aspectFill"/>
-            <view class="meta">
-              <text class="user-name">{{ item.author?.nickname || '未知用户' }}</text>
-              <text class="post-time">收藏于 {{ formatDate(item.collectedAt) }}</text>
-            </view>
-          </view>
+      <!-- 列表项 -->
+      <view 
+        v-else 
+        class="post-item" 
+        v-for="item in list" 
+        :key="item.id"
+        @click="goToDetail(item.id)"
+      >
+        <view class="post-header">
+          <!-- 这里的 item.author 可能为 null，加个判断防止报错 -->
+          <image :src="item.author?.avatar || '/static/logo.png'" class="avatar" mode="aspectFill" />
+          <text class="nickname">{{ item.author?.nickname || '未知用户' }}</text>
+          <text class="time">{{ formatTime(item.createTime) }}</text>
         </view>
         
-        <view class="card-content">
-          <text class="text-body">{{ item.content }}</text>
-          <!-- 这里为了简化，收藏列表如果有图只显示一张大图作为封面，或者复用上面的 grid 逻辑 -->
-          <image 
-            v-if="item.images && item.images.length > 0" 
-            :src="item.images[0]" 
-            class="cover-img" 
-            mode="aspectFill"
-          />
+        <view class="post-content">{{ item.content }}</view>
+        
+        <view class="post-images" v-if="item.images && item.images.length">
+          <image :src="item.images[0]" mode="aspectFill" class="post-img" />
+          <view v-if="item.images.length > 1" class="img-count">+{{item.images.length}}</view>
         </view>
         
-        <view class="card-footer">
-          <view class="action-item"><text class="icon">👍</text> {{ item.stats.likes }}</view>
-          <view class="action-item"><text class="icon">💬</text> {{ item.stats.comments }}</view>
+        <view class="post-footer">
+          <text>浏览 {{ item.stats?.views || 0 }}</text>
+          <text>收藏于 {{ formatTime(item.collectedAt) }}</text>
         </view>
       </view>
       
-      <view v-if="list.length === 0" class="empty">暂无收藏内容</view>
-    </view>
+      <!-- 底部状态 -->
+      <view v-if="loading && list.length > 0" class="loading-more">加载更多...</view>
+      <view v-if="!hasMore && list.length > 0" class="no-more">没有更多了</view>
+    </scroll-view>
   </view>
 </template>
 
 <script setup>
-// 复用 my-posts 的大部分逻辑，只是字段不同
 import { ref, onMounted } from 'vue'
 import { userApi } from '@/api/user'
 
 const list = ref([])
-onMounted(async () => {
-  try {
-    const res = await userApi.getMyCollections()
-    if (res.code === 200) list.value = res.data.list
-  } catch (e) {}
+const page = ref(1)
+const hasMore = ref(true)
+const loading = ref(false)
+
+onMounted(() => {
+  fetchData()
 })
 
-const goBack = () => uni.navigateBack()
-const goToDetail = (post) => uni.navigateTo({ url: `/pages/post/detail?id=${post.id}` })
-const formatDate = (str) => { if(!str) return ''; const d = new Date(str); return `${d.getMonth()+1}-${d.getDate()}`; }
+const fetchData = async () => {
+  if (loading.value || !hasMore.value) return
+  loading.value = true
+  
+  try {
+    console.log('开始请求我的收藏，页码:', page.value)
+    
+    // 调用 API
+    const res = await userApi.getMyCollections({ page: page.value, size: 10 })
+    
+    console.log('收藏列表返回:', res) // 调试点 1
+
+    if (res.code === 200) {
+      const newItems = res.data.list || []
+      
+      if (page.value === 1) {
+        list.value = newItems
+      } else {
+        list.value = [...list.value, ...newItems]
+      }
+      
+      // 判断是否还有更多
+      if (newItems.length < 10 || list.value.length >= res.data.total) {
+        hasMore.value = false
+      } else {
+        page.value++
+      }
+    } else {
+      uni.showToast({ title: res.message || '获取失败', icon: 'none' })
+    }
+  } catch (e) {
+    console.error('获取收藏列表报错:', e) // 调试点 2: 这里能看到是 JS 错误还是网络错误
+    uni.showToast({ title: '加载失败，请看控制台', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadMore = () => {
+  fetchData()
+}
+
+const goBack = () => {
+  uni.navigateBack()
+}
+
+const goToDetail = (id) => {
+  // 确保 id 存在
+  if(id) {
+      uni.navigateTo({ url: `/pages/post/detail?id=${id}` })
+  }
+}
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return ''
+  // 处理可能的时间格式
+  try {
+      return timeStr.split('T')[0]
+  } catch(e) {
+      return timeStr
+  }
+}
 </script>
 
 <style scoped>
-/* 样式与 my-posts 基本一致，微调封面图样式 */
-.container { min-height: 100vh; background: #F5F5F5; }
-.custom-header { position: fixed; top: 0; width: 100%; z-index: 100; background: #fff; box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05); }
-.status-bar { height: var(--status-bar-height); }
-.nav-bar { height: 88rpx; display: flex; align-items: center; padding: 0 30rpx; }
-.back-arrow { font-size: 40rpx; font-weight: bold; padding: 10rpx; margin-left: -10rpx; }
-.page-title { flex: 1; text-align: center; font-size: 34rpx; font-weight: bold; margin-right: 40rpx; }
+.container { 
+    background: #f5f5f5; 
+    min-height: 100vh; 
+    /* 关键：给 padding-top 留出自定义导航的高度 + 状态栏高度 */
+    padding-top: calc(100rpx + var(--status-bar-height));
+}
 
-.list-wrapper { padding: 30rpx; padding-top: calc(var(--status-bar-height) + 118rpx); }
+.nav-header {
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  height: 100rpx;
+  background: #fff; 
+  z-index: 100; 
+  display: flex; 
+  align-items: center; 
+  padding: 0 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.05);
+  /* 关键：适配刘海屏，让内容往下移 */
+  padding-top: var(--status-bar-height);
+}
 
-.post-card { background: #fff; border-radius: 20rpx; padding: 30rpx; margin-bottom: 24rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.03); }
-.card-header { display: flex; align-items: center; margin-bottom: 20rpx; }
-.avatar-img { width: 70rpx; height: 70rpx; border-radius: 50%; margin-right: 20rpx; background: #eee; }
-.user-name { font-size: 28rpx; font-weight: bold; color: #333; display: block; }
-.post-time { font-size: 22rpx; color: #999; margin-top: 4rpx; display: block; }
+.back-btn { font-size: 40rpx; padding: 20rpx; margin-right: 20rpx; }
+.title { font-size: 34rpx; font-weight: bold; }
 
-.text-body { font-size: 30rpx; color: #333; line-height: 1.5; margin-bottom: 16rpx; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-.cover-img { width: 100%; height: 300rpx; border-radius: 12rpx; margin-bottom: 16rpx; background: #f5f5f5; }
+.list-container { 
+    /* 关键：设置高度让 scroll-view 生效 */
+    height: calc(100vh - 100rpx - var(--status-bar-height)); 
+}
 
-.card-footer { display: flex; gap: 40rpx; color: #999; font-size: 24rpx; }
-.empty { text-align: center; color: #ccc; margin-top: 100rpx; }
+.post-item {
+  background: #fff; margin: 20rpx; padding: 30rpx; border-radius: 16rpx;
+}
+.post-header { display: flex; align-items: center; margin-bottom: 20rpx; }
+.avatar { width: 60rpx; height: 60rpx; border-radius: 50%; margin-right: 20rpx; background: #eee;}
+.nickname { font-weight: bold; font-size: 28rpx; flex: 1; }
+.time { font-size: 24rpx; color: #999; }
+
+.post-content { 
+    font-size: 30rpx; 
+    color: #333; 
+    margin-bottom: 20rpx; 
+    line-height: 1.5;
+    /* 限制显示行数，比如最多显示3行 */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+.post-images { position: relative; width: 200rpx; height: 200rpx; margin-bottom: 20rpx; }
+.post-img { width: 100%; height: 100%; border-radius: 8rpx; background: #f0f0f0; }
+.img-count {
+  position: absolute; right: 10rpx; bottom: 10rpx; background: rgba(0,0,0,0.5);
+  color: #fff; font-size: 20rpx; padding: 4rpx 10rpx; border-radius: 8rpx;
+}
+.post-footer { display: flex; justify-content: space-between; font-size: 24rpx; color: #999; border-top: 1rpx solid #eee; padding-top: 20rpx;}
+.empty-state { text-align: center; color: #999; padding-top: 200rpx; }
+.loading-more, .no-more { text-align: center; padding: 20rpx; color: #999; font-size: 24rpx; }
+.loading-state { text-align: center; padding-top: 50rpx; color: #666;}
 </style>
