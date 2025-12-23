@@ -19,7 +19,7 @@
     <view class="header-placeholder" v-if="isNavFixed"></view>
 
     <!-- 搜索栏 -->
-    <view class="search-bar" @click="goToSearch">
+    <view class="search-bar">
       <text class="search-icon">🔍</text>
       <input 
           class="search-input"
@@ -80,13 +80,14 @@ import PostCard from '@/components/PostCard.vue';
 import HotTopics from '@/components/HotTopics.vue';
 import CategoryNav from '@/components/CategoryNav.vue';
 import {userApi} from '@/api/user.js';
-import { setPostTop } from '@/api/post.js';
+import { setPostTop, likePost } from '@/api/post.js';
 
 // ⭐ 引入 API
 import { 
   getHotTopics, 
   getCategories, 
-  getPosts 
+  getPosts,
+  searchPosts
 } from '@/api/index.js';
 
 export default {
@@ -106,6 +107,7 @@ export default {
       topics: [],
       categories: [],
       posts: [],
+      keyword: '',
 
       page: 1,
       pageSize: 10,
@@ -123,6 +125,7 @@ export default {
 
   onShow() {
     uni.hideTabBar({ animation: false });
+    this.loadPosts(true);
   },
 
   onPageScroll(e) {
@@ -137,33 +140,27 @@ export default {
         this.topics = res.data;
       }
     },
-	async handleTopClick(post) {
-	  // 1. 获取当前用户积分
-	  const userRes = await userApi.getUserInfo();
-	  const user = userRes.data;
-	
-	  // 如果已经置顶 → 执行取消置顶
+    async handleTopClick(post) {
+	  // 1. 如果已经置顶 → 取消置顶
 	  if (post.isTop) {
-	    await setPostTop(post.id, false); // 取消置顶
-	    uni.showToast({ title: '已取消置顶', icon: 'none' });
-	    this.loadPosts(true);
+	    const res = await setPostTop(post.id, false);
+	    if (res.code === 200) {
+	      uni.showToast({ title: '已取消置顶', icon: 'none' });
+	      this.loadPosts(true);
+	    }
 	    return;
 	  }
-	
-	  // 2. 未置顶 → 扣积分
-	  if (user.points < 5) {
+	  // 2. 检查积分（后端要求至少30积分，后端会扣减）
+	  const userRes = await userApi.getUserInfo();
+	  const user = userRes.data;
+	  if ((user.points || 0) < 30) {
 	    return uni.showToast({
-	      title: '积分不足，置顶失败',
+	      title: '积分不足，需30积分置顶',
 	      icon: 'none'
 	    });
 	  }
-	
-	  // 扣 5 积分
-	  await userApi.updatePoints({ delta: -5 });
-	
-	  // 3. 调用置顶接口
+	  // 3. 调用置顶接口（后端扣减积分并记录交易）
 	  const res = await setPostTop(post.id, true);
-	
 	  if (res.code === 200) {
 	    uni.showToast({ title: '置顶成功', icon: 'success' });
 	    this.loadPosts(true);
@@ -175,7 +172,13 @@ export default {
     async loadCategories() {
       const res = await getCategories();
       if (res.code === 200) {
-        this.categories = res.data;
+        const raw = Array.isArray(res.data?.list) ? res.data.list : [];
+        const cats = raw.filter(c => c && (c.isActive === undefined || c.isActive));
+        // 保证有“全部”
+        if (!cats.some(c => c && c.id === 0)) {
+          cats.unshift({ id: 0, name: '全部' });
+        }
+        this.categories = cats;
       }
     },
 
@@ -186,11 +189,14 @@ export default {
         this.posts = [];
       }
     
-      const res = await getPosts({
-        categoryId: this.currentCategory,
+      const params = {
         page: this.page,
         pageSize: this.pageSize
-      });
+      };
+      if (this.currentCategory && this.currentCategory > 0) {
+        params.categoryId = this.currentCategory;
+      }
+      const res = await getPosts(params);
     
       if (res.code === 200) {
         const list = res.data.list;
@@ -203,9 +209,13 @@ export default {
           this.page++;
         }
     
-        // ⭐ 新增：按置顶排序
+        // ⭐ 排序：置顶优先，其次按时间倒序
         this.posts.sort((a, b) => {
-          return (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0);
+          const topDiff = (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0);
+          if (topDiff !== 0) return topDiff;
+          const tb = new Date(b.time).getTime() || 0;
+          const ta = new Date(a.time).getTime() || 0;
+          return tb - ta;
         });
       }
     },
@@ -217,8 +227,26 @@ export default {
       await this.loadPosts(true);
     },
 
-    goToSearch() {
-      uni.navigateTo({ url: '/pages/search/index' });
+    async search() {
+      const kw = (this.keyword || '').trim();
+      if (!kw) {
+        await this.loadPosts(true);
+        return;
+      }
+      const res = await searchPosts(kw);
+      if (res.code === 200) {
+        const list = res.data?.list || [];
+        this.posts = list;
+        this.hasMore = !!res.data?.hasMore;
+        this.page = 1;
+        this.posts.sort((a, b) => {
+          const topDiff = (b.isTop ? 1 : 0) - (a.isTop ? 1 : 0);
+          if (topDiff !== 0) return topDiff;
+          const tb = new Date(b.time).getTime() || 0;
+          const ta = new Date(a.time).getTime() || 0;
+          return tb - ta;
+        });
+      }
     },
 
     handleTopicClick(post) {
@@ -240,7 +268,7 @@ export default {
     },
 
     handleUserClick(post) {
-      uni.navigateTo({ url: `/pages/user/profile?id=${post.userId || post.id}` });
+      uni.navigateTo({ url: `/pages/user/home?id=${userId}` })
     },
 
     handlePostMore(post) {
@@ -268,7 +296,22 @@ export default {
     },
 
     handleLikeClick({ post, isLiked }) {
-      console.log('点赞状态:', isLiked);
+      (async () => {
+        try {
+          const res = await likePost(post.id, isLiked);
+          if (res.code === 200) {
+            const target = this.posts.find(p => p.id === post.id);
+            if (target) {
+              target.isLiked = isLiked;
+              const cur = parseInt(target.likes || 0) || 0;
+              const next = cur + (isLiked ? 1 : -1);
+              target.likes = next < 0 ? 0 : next;
+            }
+          }
+        } catch (e) {
+          uni.showToast({ title: '点赞失败', icon: 'none' });
+        }
+      })();
     }
   }
 };

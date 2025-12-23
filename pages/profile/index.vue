@@ -47,10 +47,10 @@
                 <text class="num">{{ userStore.userInfo.stats?.followers || 0 }}</text>
                 <text class="label">粉丝</text>
               </view>
-        <view class="stat-item" @click="goToFollowList">
-          <text class="num">5</text> <!-- 这里以后最好换成 store 里的数据 -->
-          <text class="label">关注</text>
-        </view>
+<view class="stat-item" @click="goToFollowList">
+  <text class="num">{{ userStore.userInfo.stats?.following || 0 }}</text>
+  <text class="label">关注</text>
+</view>
       </view>
     </view>
 
@@ -76,8 +76,8 @@
        <text>⚙️ 个人资料设置</text>
        <text class="arrow">></text>
      </view>
-	 
-	 <!-- 管理员入口 (仅演示用，实际需判断权限) -->
+
+     <!-- 管理员入口 (仅演示用，实际需判断权限) -->
 	 <view class="menu-item admin-entry" @click="handleAdmin">
 	   <text>🛡️ 内容审核后台</text>
 	   <text class="arrow">></text>
@@ -194,32 +194,21 @@ const handleMyErrands = () => {
   // 跳转到刚写好的页面
   uni.navigateTo({ url: '/pages/profile/my-errands' })
 }
-
 const handleAdmin = () => {
   // 可以在这里简单判断一下权限
   // if (userStore.userInfo?.role !== 'ADMIN') return uni.showToast({title:'无权限', icon:'none'})
   
   uni.navigateTo({ url: '/pages/admin/report-list' })
 }
-// pages/profile/index.vue
-
 const handleLogout = () => {
   uni.showModal({
     title: '提示',
     content: '确定要退出登录吗？',
-    success: async (res) => { // 加上 async
+    success: (res) => {
       if (res.confirm) {
-        uni.showLoading({ title: '退出中' })
-        await userStore.logout() // 等待退出完成
-        uni.hideLoading()
-        
-        // 重置页面本地数据
-        isCheckedIn.value = false 
-        
+        userStore.logout()
+        myPosts.value = [] // 清空本地数据
         uni.showToast({ title: '已退出', icon: 'none' })
-        
-        // 可选：退出后跳回首页或刷新当前页
-        // uni.switchTab({ url: '/pages/index/index' })
       }
     }
   })
@@ -356,14 +345,4 @@ const goToFollowList = () => {
   box-shadow: none;
 }
 .checkin-btn::after { border: none; }
-
-
-.admin-entry {
-  margin-top: 20rpx;
-  background: #E6F7FF; /* 浅蓝色背景，区别于普通菜单 */
-}
-.admin-entry text {
-  color: #0050B3;
-  font-weight: bold;
-}
 </style>

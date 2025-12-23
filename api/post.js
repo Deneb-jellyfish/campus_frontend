@@ -1,25 +1,13 @@
 // api/post.js
-
-import { delay, postsDetailData, commentsData } from '../mock/post.js';
-
-const USE_MOCK = true;
+import request from '@/utils/request';
 
 /**
  * 获取帖子详情
  * @param {Number} postId 
  */
 export const getPostDetail = async (postId) => {
-  if (USE_MOCK) {
-    await delay(300);
-    const post = postsDetailData[postId];
-    if (post) {
-      return { code: 200, data: post, message: 'success' };
-    } else {
-      return { code: 404, data: null, message: '帖子不存在' };
-    }
-  }
-  // 真实请求
-  // return request({ url: `/posts/${postId}` });
+  const res = await request.get(`/posts/${postId}`);
+  return res;
 };
 
 /**
@@ -27,18 +15,8 @@ export const getPostDetail = async (postId) => {
  * @param {Number} postId 
  */
 export const getPostComments = async (postId) => {
-  if (USE_MOCK) {
-    await delay(200);
-    const comments = commentsData[postId] || [];
-    return { 
-      code: 200, 
-      data: {
-        list: comments,
-        total: comments.length
-      }, 
-      message: 'success' 
-    };
-  }
+  const res = await request.get(`/posts/${postId}/comments`);
+  return res;
 };
 
 /**
@@ -47,9 +25,10 @@ export const getPostComments = async (postId) => {
  * @param {Boolean} isLike 
  */
 export const likePost = async (postId, isLike) => {
-  if (USE_MOCK) {
-    await delay(150);
-    return { code: 200, data: { isLiked: isLike }, message: 'success' };
+  if (isLike === true) {
+    return await request.post(`/posts/${postId}/like`);
+  } else {
+    return await request.del(`/posts/${postId}/like`);
   }
 };
 
@@ -59,17 +38,25 @@ export const likePost = async (postId, isLike) => {
  * @param {Boolean} isCollect 
  */
 export const collectPost = async (postId, isCollect) => {
-  if (USE_MOCK) {
-    await delay(150);
-    return { code: 200, data: { isCollected: isCollect }, message: 'success' };
+  if (isCollect) {
+    return await request.post(`/posts/${postId}/collect`);
   }
+  return await request.del(`/posts/${postId}/collect`);
 };
 
 /**
  * 发表评论
  * @param {Object} data - { postId, content, replyTo }
  */
-
+export const addComment = async (data) => {
+  const payload = {
+    content: data.content,
+    parentId: data.parentId || null,
+    replyToId: data.replyToId || null
+  };
+  const res = await request.post(`/posts/${data.postId}/comments`, payload);
+  return res;
+};
 
 /**
  * 点赞评论
@@ -77,137 +64,42 @@ export const collectPost = async (postId, isCollect) => {
  * @param {Boolean} isLike 
  */
 export const likeComment = async (commentId, isLike) => {
-  if (USE_MOCK) {
-    await delay(100);
-    return { code: 200, data: { isLiked: isLike }, message: 'success' };
-  }
+  const flag = isLike === true ? 'true' : 'false';
+  return await request.post(`/comments/${commentId}/like?isLike=${flag}`);
 };
-// api/post.js
-
 // 举报帖子
-export function reportPost(postId, reason) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`举报帖子 ${postId}，原因: ${reason}`);
-      resolve({
-        code: 200,
-        message: '举报成功'
-      });
-    }, 300);
-  });
-}
+export const reportPost = async (postId, reason) => {
+  const res = await request.post(`/reports/post?postId=${postId}`, { reason });
+  return res;
+};
+// 暂无评论举报后端接口，如需可保留 Mock 或后续补充
+export const reportComment = async (commentId, reason) => {
+  return { code: 200, message: '暂未开通评论举报' };
+};
 
-// 举报评论
-export function reportComment(commentId, reason) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`举报评论 ${commentId}，原因: ${reason}`);
-      resolve({
-        code: 200,
-        message: '举报成功'
-      });
-    }, 300);
-  });
-}
-
-// 添加评论（增强版）
-export function addComment(data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const newComment = {
-        id: Date.now(),
-        postId: data.postId,
-        userId: 999,
-        username: '当前用户',
-        avatar: 'https://via.placeholder.com/80',
-        
-        content: data.content,
-        time: '刚刚',
-        likes: 0,
-        isLiked: false,
-        isAuthor: false,
-        isMine: true
-      };
-      
-      // 如果是回复，添加回复信息
-      if (data.replyToUsername) {
-        newComment.replyTo = data.replyToUsername;
-        newComment.isOP = false; // 可以根据实际情况判断
-      }
-      
-      resolve({
-        code: 200,
-        data: newComment,
-        message: '评论成功'
-      });
-    }, 300);
-  });
-}
 // 发布帖子
-export function publishPost(data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 模拟生成新帖子
-      const newPost = {
-        id: Date.now(),
-        userId: 999,
-        userAvatar: 'https://via.placeholder.com/80',
-        userName: '当前用户',
-        
-        time: '刚刚',
-        topicId: data.topicId,
-        topicName: data.topicName,
-        content: data.content,
-        images: data.images || [],
-        views: 0,
-        comments: 0,
-        likes: 0,
-        shares: 0,
-        isAnonymous: data.isAnonymous || false
-      };
-      
-      // 如果是闲置，添加商品信息
-      if (data.product) {
-        newPost.product = {
-          price: data.product.price,
-          tradeMethod: data.product.tradeMethod,
-          status: 'selling'
-        };
-      }
-      
-      // 如果是投票，添加投票信息
-      if (data.vote) {
-        newPost.vote = {
-          options: data.vote.options.map((opt, index) => ({
-            id: index + 1,
-            text: opt,
-            count: 0
-          })),
-          totalVotes: 0,
-          isVoted: false
-        };
-      }
-      
-      console.log('发布帖子:', newPost);
-      
-      resolve({
-        code: 200,
-        data: newPost,
-        message: '发布成功'
-      });
-    }, 500);
-  });
-}
-
-import { setTop } from '../mock/post.js';
+export const publishPost = async (data) => {
+  const payload = {
+    categoryId: data.categoryId || null,
+    isAnonymous: data.isAnonymous || false,
+    content: data.content,
+    images: data.images || [],
+    product: data.product || null,
+    topicId: data.topicId || null,
+    topicName: data.topicName || null
+  };
+  const res = await request.post('/posts', payload);
+  return res;
+};
 
 /**
  * 置顶帖子
  * @param {Number} postId
  */
 export const setPostTop = async (postId, isTop = true) => {
-  if (USE_MOCK) {
-    return await setTop(postId, isTop);
+  if (isTop) {
+    return await request.post(`/posts/${postId}/top`, { isTop: true });
+  } else {
+    return await request.del(`/posts/${postId}/top`);
   }
 };
-

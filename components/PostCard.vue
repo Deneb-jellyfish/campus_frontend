@@ -1,16 +1,20 @@
 <template>
   <view class="post-card">
     <!-- 帖子头部 -->
-	 <!-- ⭐ 置顶标识 -->
-	<view v-if="post.isTop" class="top-badge">📌置顶</view>
+    <view v-if="post.isTop" class="top-badge">📌置顶</view>
+    
     <view class="post-header">
-		
       <view class="user-info" @click="handleUserClick">
-        <view class="user-avatar">{{ post.userAvatar }}</view>
+        <!-- 修复点1：使用 image 标签显示头像 -->
+        <image 
+          class="user-avatar" 
+          :src="getFullImageUrl(post.userAvatar)" 
+          mode="aspectFill"
+        ></image>
+        
         <view class="user-detail">
           <view class="user-name-row">
             <text class="user-name">{{ post.userName }}</text>
-            
           </view>
           <text class="post-time">{{ post.time }}</text>
         </view>
@@ -28,14 +32,16 @@
 
     <!-- 帖子图片 -->
     <view class="post-images" v-if="post.images && post.images.length > 0">
-      <view 
+      <!-- 修复点2：使用 image 标签显示配图 -->
+      <image 
         class="image-item" 
         v-for="(img, index) in post.images" 
         :key="index"
-        :style="{ backgroundColor: img }"
-        @click="handleImageClick(index)"
+        :src="getFullImageUrl(img)"
+        mode="aspectFill"
+        @click.stop="handleImageClick(index)"
       >
-      </view>
+      </image>
     </view>
 
     <!-- 商品信息 -->
@@ -61,7 +67,7 @@
       </view>
       <view class="footer-item" @click="handleCommentClick">
         <text class="icon">💬</text>
-        <text>评论</text>
+        <text>{{ formatNumber(post.comments) }}</text>
       </view>
     </view>
   </view>
@@ -77,13 +83,26 @@ export default {
       default: () => ({})
     }
   },
-  data() {
-    return {
-      isLiked: false
-    };
+  computed: {
+    isLiked() {
+      return !!(this.post && this.post.isLiked);
+    }
   },
   methods: {
-    // 格式化数字显示
+    // 修复点3：图片路径处理函数
+    getFullImageUrl(url) {
+      if (!url) return '/static/logo.png'; // 默认图路径，请根据实际情况修改
+      
+      if (url.startsWith('http') || url.startsWith('https')) {
+        return url;
+      }
+      
+      // ⚠️ 真机调试请把 localhost 换成电脑的局域网IP (如 192.168.1.x)
+      const baseUrl = 'http://localhost:8080'; 
+      
+      return baseUrl + (url.startsWith('/') ? url : '/' + url);
+    },
+
     formatNumber(num) {
       if (!num) return '0';
       const n = parseInt(num);
@@ -93,43 +112,16 @@ export default {
       return num;
     },
     
-    // 点击用户头像/名称
-    handleUserClick() {
-      this.$emit('user-click', this.post);
-    },
-    
-    // 点击更多按钮
-    handleMoreClick() {
-      this.$emit('more-click', this.post);
-    },
-    
-    // 点击帖子内容
-    handlePostClick() {
-      this.$emit('post-click', this.post);
-    },
-    
-    // 点击图片
-    handleImageClick(index) {
-      this.$emit('image-click', { post: this.post, imageIndex: index });
-    },
-    
-    // 点击商品
-    handleProductClick() {
-      this.$emit('product-click', this.post);
-    },
-    // 点击置顶
-    handleTopClick() {
-      this.$emit('top-click', this.post);
-    },
-    // 点击评论
-    handleCommentClick() {
-      this.$emit('comment-click', this.post);
-    },
-    
-    // 点击点赞
+    handleUserClick() { this.$emit('user-click', this.post); },
+    handleMoreClick() { this.$emit('more-click', this.post); },
+    handlePostClick() { this.$emit('post-click', this.post); },
+    handleImageClick(index) { this.$emit('image-click', { post: this.post, imageIndex: index }); },
+    handleProductClick() { this.$emit('product-click', this.post); },
+    handleTopClick() { this.$emit('top-click', this.post); },
+    handleCommentClick() { this.$emit('comment-click', this.post); },
     handleLikeClick() {
-      this.isLiked = !this.isLiked;
-      this.$emit('like-click', { post: this.post, isLiked: this.isLiked });
+      const newStatus = !this.isLiked;
+      this.$emit('like-click', { post: this.post, isLiked: newStatus });
     }
   }
 };
@@ -146,7 +138,9 @@ export default {
   font-size: 22rpx;
   border-radius: 8rpx;
   box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.15);
+  z-index: 10;
 }
+
 .post-card {
   position: relative;
   background-color: #fff;
@@ -172,11 +166,7 @@ export default {
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
-  background-color: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
+  background-color: #f0f0f0;
   margin-right: 20rpx;
 }
 
@@ -195,14 +185,6 @@ export default {
   font-size: 28rpx;
   color: #333;
   font-weight: bold;
-}
-
-.user-level {
-  font-size: 20rpx;
-  color: #ff9800;
-  background-color: #fff3e0;
-  padding: 2rpx 8rpx;
-  border-radius: 8rpx;
 }
 
 .post-time {
@@ -236,12 +218,14 @@ export default {
   font-size: 28rpx;
   color: #333;
   line-height: 1.6;
+  word-break: break-all;
 }
 
 .post-images {
   display: flex;
   gap: 10rpx;
   margin-bottom: 20rpx;
+  flex-wrap: wrap;
 }
 
 .image-item {

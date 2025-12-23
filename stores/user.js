@@ -5,7 +5,6 @@ import { defineStore } from 'pinia'
 import { setToken, removeToken, getToken } from '@/utils/request'
 
 import { ref, computed } from 'vue'
-import { userApi } from '@/api/user' // 引入 API
 
 export const useUserStore = defineStore('user', () => {
   // 状态

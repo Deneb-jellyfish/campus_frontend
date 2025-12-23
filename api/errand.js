@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 import mock from '@/mock/errand'
 
-const USE_MOCK = true
+const USE_MOCK = false
 
 const mockRequest = async (fn, params) => {
   try { return await fn(params) } catch (e) { throw e }
