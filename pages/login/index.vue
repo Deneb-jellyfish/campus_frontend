@@ -90,7 +90,10 @@ const handleLogin = async () => {
 }
 
 const toggleMode = () => {
-  uni.showToast({ title: '注册功能请查看API文档 U01', icon: 'none' })
+  
+  uni.navigateTo({
+    url: '/pages/login/register'
+  })
 }
 </script>
 

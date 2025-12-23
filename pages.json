@@ -8,6 +8,8 @@
 		"navigationStyle": "custom"
       }
     },
+	
+	
 	{
 	  "path": "pages/post/detail",
 	  "style": {
@@ -123,6 +125,12 @@
 	        "navigationStyle": "custom", // 去除原生导航
 	        "enablePullDownRefresh": true
 	      }
+	},
+	{
+		"path": "pages/login/register",
+		"style": {
+			"navigationStyle": "custom"
+		}
 	}
     
   ],

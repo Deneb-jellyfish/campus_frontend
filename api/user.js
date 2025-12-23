@@ -3,7 +3,7 @@ import request from '@/utils/request' // 假设你以后会有这个封装好的
 import mock from '@/mock/user'
 
 // 开关：控制是否使用 Mock 数据
-const USE_MOCK = true 
+const USE_MOCK = false 
 
 // 辅助函数：模拟 request 请求，保持和 uni.request 返回结构一致
 const mockRequest = async (mockFn, params) => {
@@ -16,11 +16,32 @@ const mockRequest = async (mockFn, params) => {
 }
 
 export const userApi = {
-  // 登录
-  login(data) {
-    if (USE_MOCK) return mockRequest(mock.login, data)
-    return request.post('/auth/login', data)
-  },
+  // 2.2 用户登录 (U02)
+    login(data) {
+      if (USE_MOCK) return mockRequest(mock.login, data)
+      // 真实接口: POST /auth/login
+      // 注意：后端文档要求 username 字段 (即使输入的是 email)
+      return request.post('/auth/login', {
+        username: data.username, 
+        password: data.password
+      })
+    },
+	 // 2.1 用户注册 (U01) - 新增真实接口绑定
+	  register(data) {
+	    if (USE_MOCK) return mockRequest(mock.register, data) // Mock里可能没写，但这不重要了
+	    // 真实接口: POST /auth/register
+	    return request.post('/auth/register', {
+	      username: data.username,
+	      email: data.email,
+	      password: data.password
+	    })
+	  },
+	   // 2.3 退出登录 (U05)
+	    logout() {
+	      // 退出不需要 mock，直接调接口
+	      if (USE_MOCK) return Promise.resolve({ code: 200 }) 
+	      return request.post('/auth/logout')
+	    },
 
   // 获取用户信息
   getUserInfo() {

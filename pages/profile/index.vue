@@ -201,15 +201,25 @@ const handleAdmin = () => {
   
   uni.navigateTo({ url: '/pages/admin/report-list' })
 }
+// pages/profile/index.vue
+
 const handleLogout = () => {
   uni.showModal({
     title: '提示',
     content: '确定要退出登录吗？',
-    success: (res) => {
+    success: async (res) => { // 加上 async
       if (res.confirm) {
-        userStore.logout()
-        myPosts.value = [] // 清空本地数据
+        uni.showLoading({ title: '退出中' })
+        await userStore.logout() // 等待退出完成
+        uni.hideLoading()
+        
+        // 重置页面本地数据
+        isCheckedIn.value = false 
+        
         uni.showToast({ title: '已退出', icon: 'none' })
+        
+        // 可选：退出后跳回首页或刷新当前页
+        // uni.switchTab({ url: '/pages/index/index' })
       }
     }
   })
