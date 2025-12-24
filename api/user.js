@@ -108,7 +108,15 @@ export const userApi = {
         method: 'GET',
         data: params 
       })
-    }
+    },
+	// [新增] 获取用户发布的帖子列表 (用于“Ta的动态”)
+	  getUserPosts: (userId, params = { page: 1, size: 10 }) => {
+	      return request({
+	          url: `/api/users/${userId}/posts`, // 对应 API 4.17
+	          method: 'GET',
+	          data: params
+	      })
+	  }
 }
 export const adminApi = {
   // [修正] status 默认为 0 (数字)，且使用 request({ ... }) 写法
