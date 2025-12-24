@@ -176,13 +176,28 @@
           @focus="handleInputFocus"
           @blur="handleInputBlur"
         />
-        <text class="emoji-btn">😊</text>
+        <text class="emoji-btn" @click="toggleEmojiPanel">😊</text>
       </view>
       <text class="image-btn">🖼</text>
       <view class="send-btn" :class="{ active: commentText.trim() }" @click="handleSendComment">
         发送
       </view>
     </view>
+	<!-- 表情面板 -->
+	<view v-if="showEmojiPanel" class="emoji-panel">
+	  <scroll-view class="emoji-content" scroll-y>
+	    <view class="emoji-grid">
+	      <text 
+	        v-for="(emoji, index) in emojiList" 
+	        :key="index"
+	        class="emoji-item"
+	        @click="insertEmoji(emoji)"
+	      >
+	        {{ emoji }}
+	      </text>
+	    </view>
+	  </scroll-view>
+	</view>
 
     <!-- 取消回复按钮 -->
     <view v-if="replyTarget" class="reply-bar">
@@ -206,6 +221,8 @@ export default {
       isLiked: false,
       isCollected: false,
       commentText: '',
+	  showEmojiPanel: false,
+	  emojiList: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '👍', '👎', '👊', '✊', '🤝', '👏', '🙌', '🎉', '🎊', '🎈', '🎁', '🎀', '🎂', '🍰'],
       
       // 回复相关
       replyTarget: null, 
@@ -370,6 +387,15 @@ export default {
         }
       });
     },
+	// 切换表情面板
+	toggleEmojiPanel() {
+	  this.showEmojiPanel = !this.showEmojiPanel;
+	},
+	insertEmoji(emoji) {
+	  this.commentText += emoji;
+	  // 可选：插入后关闭面板
+	  // this.showEmojiPanel = false;
+	},
     
     // 回复一级评论
     replyToComment(comment) {
@@ -398,7 +424,10 @@ export default {
       this.replyTarget = null;
     },
     
-    handleInputFocus() { console.log('Focus'); },
+    handleInputFocus() { 
+		console.log('Focus');
+		this.showEmojiPanel = false;
+	 },
     handleInputBlur() {},
     
     goBack() { uni.navigateBack(); },
@@ -679,4 +708,36 @@ export default {
 .reply-bar { position: fixed; bottom: 120rpx; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 15rpx 30rpx; background-color: #fff3e0; border-top: 1rpx solid #ffe0b2; z-index: 99; }
 .reply-hint { font-size: 26rpx; color: #ff6f00; }
 .cancel-reply { font-size: 32rpx; color: #ff6f00; padding: 5rpx 15rpx; }
+/* 表情面板 */
+.emoji-panel {
+  position: fixed;
+  bottom: 120rpx;
+  left: 0;
+  right: 0;
+  height: 400rpx;
+  background-color: #fff;
+  border-top: 1rpx solid #eee;
+  z-index: 99;
+}
+
+.emoji-content {
+  height: 100%;
+  padding: 20rpx;
+}
+
+.emoji-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.emoji-item {
+  font-size: 50rpx;
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 </style>
