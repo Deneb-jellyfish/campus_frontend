@@ -12,7 +12,7 @@ export async function uploadBatchImages(files) {
       
     // 使用正确的参数名匹配后端 @RequestParam("files[]")  
     uni.uploadFile({  
-      url: 'http://localhost:8080/api/common/upload/batch',  
+      url: '/api/common/upload/batch',  
       filePath: fileArray[0],  // 单文件上传  
       name: 'files[]',  // 匹配后端参数名  
       formData: {  
@@ -49,7 +49,7 @@ export const commonApi = {
       const token = uni.getStorageSync('token')  
         
       uni.uploadFile({  
-        url: 'http://localhost:8080/api/common/upload',  
+        url: '/api/common/upload',  
         filePath: filePath,  
         name: 'file',  
         header: {  

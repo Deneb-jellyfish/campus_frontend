@@ -98,7 +98,7 @@ export default {
       }
       
       // ⚠️ 真机调试请把 localhost 换成电脑的局域网IP (如 192.168.1.x)
-      const baseUrl = 'http://localhost:8080'; 
+      const baseUrl = ''; 
       
       return baseUrl + (url.startsWith('/') ? url : '/' + url);
     },

@@ -211,7 +211,7 @@
 import { getPostDetail, getPostComments, likePost, collectPost, addComment, likeComment, reportPost, reportComment } from '../../api/post.js';
 
 // ✅ 必须配置：请将此处改为你的电脑 IP (手机调试) 或 localhost (电脑调试)
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = '';
 
 export default {
   data() {

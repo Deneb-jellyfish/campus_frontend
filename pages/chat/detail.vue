@@ -202,7 +202,7 @@ onLoad(options) {
   getFullImageUrl(url) {
     if (!url) return '/static/avatars/default.png'
     if (url.startsWith('http')) return url
-    return 'http://localhost:8080' + (url.startsWith('/') ? url : '/' + url)
+    return (url.startsWith('/') ? url : '/' + url)
   },  
     // 获取聊天记录  
     async fetchMessages() {  

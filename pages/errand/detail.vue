@@ -92,7 +92,7 @@ const detail = ref(null)
 const errandId = ref('')  
   
 // 处理图片路径 - 参考帖子详情页的实现  
-const BASE_URL = 'http://localhost:8080'  
+const BASE_URL = ''  
   
 const getFullImageUrl = (url) => {  
   if (!url) return '/static/logo.png'  

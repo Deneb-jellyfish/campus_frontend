@@ -1,7 +1,7 @@
 import { useUserStore } from '@/stores/user'
 
-// ✅ 电脑调试用 localhost，手机调试请改成本机局域网 IP (如 http://192.168.1.5:8080)
-const BASE_URL = 'http://localhost:8080'
+
+const BASE_URL = ''
 
 // --- 封装请求函数 ---
 const request = (options) => {
