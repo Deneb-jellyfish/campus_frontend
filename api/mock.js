@@ -9,7 +9,7 @@ export const commonApi = {
     // 真实上传逻辑
     return new Promise((resolve, reject) => {
       uni.uploadFile({
-        url: 'https://api.campuscircle.com/v1/common/upload',
+        url: 'http://120.26.30.91:8080/upload',
         filePath: filePath,
         name: 'file',
         header: {

@@ -6,7 +6,7 @@
 let USE_MOCK = false
 
 // 真实后端地址
-const BASE_URL = 'http://localhost:8080/api'
+const BASE_URL = 'http://120.26.30.91:8080/api'
 
 // Mock 地址（本地）
 const MOCK_URL = '/api'
